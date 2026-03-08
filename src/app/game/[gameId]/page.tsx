@@ -157,7 +157,7 @@ function GameTable({ game, myTeam }: { game: GameState; myTeam: number }) {
   }
 
   return (
-    <div className={`game-table ${count === 4 ? 'table-4p' : ''}`}>
+    <div className={`game-table table-${count}p`}>
       <div className="table-felt">
         {/* Center info */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">

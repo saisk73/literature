@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const maxPlayers = body.maxPlayers === 4 ? 4 : 6;
+  const validCounts = [4, 6, 8, 10];
+  const maxPlayers = validCounts.includes(body.maxPlayers) ? body.maxPlayers : 6;
   const showLog = body.showLog !== false;
 
   let code = generateGameCode();

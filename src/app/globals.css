@@ -49,19 +49,41 @@ body {
   z-index: 10;
 }
 
-/* 6-player positions */
-.table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
-.table-player.pos-1 { top: -8px; right: 8%; transform: translate(0, 0); }
-.table-player.pos-2 { top: -8px; left: 50%; transform: translate(-50%, 0); }
-.table-player.pos-3 { top: -8px; left: 8%; transform: translate(0, 0); }
-.table-player.pos-4 { bottom: -8px; left: 8%; transform: translate(0, 0); }
-.table-player.pos-5 { bottom: -8px; right: 8%; transform: translate(0, 0); }
-
-/* 4-player positions */
+/* 4-player positions: bottom, right, top, left */
 .table-4p .table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
 .table-4p .table-player.pos-1 { top: 50%; right: 0; transform: translate(0, -50%); }
 .table-4p .table-player.pos-2 { top: -8px; left: 50%; transform: translate(-50%, 0); }
 .table-4p .table-player.pos-3 { top: 50%; left: 0; transform: translate(0, -50%); }
+
+/* 6-player positions: bottom, bottom-right, top-right, top, top-left, bottom-left */
+.table-6p .table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-6p .table-player.pos-1 { bottom: -8px; right: 8%; transform: translate(0, 0); }
+.table-6p .table-player.pos-2 { top: -8px; right: 8%; transform: translate(0, 0); }
+.table-6p .table-player.pos-3 { top: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-6p .table-player.pos-4 { top: -8px; left: 8%; transform: translate(0, 0); }
+.table-6p .table-player.pos-5 { bottom: -8px; left: 8%; transform: translate(0, 0); }
+
+/* 8-player positions */
+.table-8p .table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-8p .table-player.pos-1 { bottom: -8px; right: 4%; transform: translate(0, 0); }
+.table-8p .table-player.pos-2 { top: 50%; right: 0; transform: translate(0, -50%); }
+.table-8p .table-player.pos-3 { top: -8px; right: 4%; transform: translate(0, 0); }
+.table-8p .table-player.pos-4 { top: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-8p .table-player.pos-5 { top: -8px; left: 4%; transform: translate(0, 0); }
+.table-8p .table-player.pos-6 { top: 50%; left: 0; transform: translate(0, -50%); }
+.table-8p .table-player.pos-7 { bottom: -8px; left: 4%; transform: translate(0, 0); }
+
+/* 10-player positions */
+.table-10p .table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-10p .table-player.pos-1 { bottom: -8px; right: 2%; transform: translate(0, 0); }
+.table-10p .table-player.pos-2 { top: 35%; right: 0; transform: translate(0, -50%); }
+.table-10p .table-player.pos-3 { top: -8px; right: 15%; transform: translate(0, 0); }
+.table-10p .table-player.pos-4 { top: -8px; right: 42%; transform: translate(0, 0); }
+.table-10p .table-player.pos-5 { top: -8px; left: 42%; transform: translate(0, 0); }
+.table-10p .table-player.pos-6 { top: -8px; left: 15%; transform: translate(0, 0); }
+.table-10p .table-player.pos-7 { top: 35%; left: 0; transform: translate(0, -50%); }
+.table-10p .table-player.pos-8 { bottom: -8px; left: 2%; transform: translate(0, 0); }
+.table-10p .table-player.pos-9 { bottom: -8px; left: 25%; transform: translate(0, 0); }
 
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.4); }

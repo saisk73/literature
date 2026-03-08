@@ -8,7 +8,7 @@ export default function HomePage() {
   const [name, setName] = useState('');
   const [savedName, setSavedName] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');
-  const [playerCount, setPlayerCount] = useState<4 | 6>(6);
+  const [playerCount, setPlayerCount] = useState<4 | 6 | 8 | 10>(6);
   const [showLog, setShowLog] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -132,30 +132,23 @@ export default function HomePage() {
 
             <div className="space-y-2">
               <label className="block text-sm text-emerald-300">Number of players</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPlayerCount(4)}
-                  className={`flex-1 py-2 rounded-lg font-semibold transition-colors ${
-                    playerCount === 4
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-emerald-800 text-emerald-300 hover:bg-emerald-700'
-                  }`}
-                >
-                  4 Players
-                </button>
-                <button
-                  onClick={() => setPlayerCount(6)}
-                  className={`flex-1 py-2 rounded-lg font-semibold transition-colors ${
-                    playerCount === 6
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-emerald-800 text-emerald-300 hover:bg-emerald-700'
-                  }`}
-                >
-                  6 Players
-                </button>
+              <div className="grid grid-cols-4 gap-2">
+                {([4, 6, 8, 10] as const).map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setPlayerCount(n)}
+                    className={`py-2 rounded-lg font-semibold transition-colors text-sm ${
+                      playerCount === n
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-emerald-800 text-emerald-300 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {n}P
+                  </button>
+                ))}
               </div>
               <div className="text-xs text-emerald-500 text-center">
-                {playerCount === 4 ? '2 teams of 2 · 12 cards each' : '2 teams of 3 · 8 cards each'}
+                {`2 teams of ${playerCount / 2} · ${Math.floor(48 / playerCount)} cards each`}
               </div>
             </div>
 
