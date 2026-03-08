@@ -84,7 +84,7 @@ export async function POST(
     details: {
       message: 'Game started! Cards have been dealt.',
       pairedPlayers: extraPlayers.length > 0
-        ? extraPlayers.map((ep: { player_id: string }) => ep.player_id)
+        ? extraPlayers.map((ep) => ep.player_id)
         : undefined,
     },
     created_at: new Date(),
