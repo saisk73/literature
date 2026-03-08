@@ -12,3 +12,62 @@ body {
     box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.3);
   }
 }
+
+/* Poker table */
+.game-table {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 10;
+  margin: 0 auto;
+}
+
+.table-felt {
+  position: absolute;
+  inset: 40px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, #1a6b3c, #0d4a25 70%, #0a3d1e);
+  border: 6px solid #5c3a1e;
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.3),
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 3px #3d2510,
+    0 0 0 8px #2a1a0c;
+}
+
+.table-felt::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-player {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* 6-player positions */
+.table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-player.pos-1 { top: -8px; right: 8%; transform: translate(0, 0); }
+.table-player.pos-2 { top: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-player.pos-3 { top: -8px; left: 8%; transform: translate(0, 0); }
+.table-player.pos-4 { bottom: -8px; left: 8%; transform: translate(0, 0); }
+.table-player.pos-5 { bottom: -8px; right: 8%; transform: translate(0, 0); }
+
+/* 4-player positions */
+.table-4p .table-player.pos-0 { bottom: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-4p .table-player.pos-1 { top: 50%; right: 0; transform: translate(0, -50%); }
+.table-4p .table-player.pos-2 { top: -8px; left: 50%; transform: translate(-50%, 0); }
+.table-4p .table-player.pos-3 { top: 50%; left: 0; transform: translate(0, -50%); }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(251, 191, 36, 0.4); }
+  50% { box-shadow: 0 0 16px 6px rgba(251, 191, 36, 0.7); }
+}
+
+.active-turn-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

@@ -113,24 +113,71 @@ function CardView({ card, onClick, selected, small }: {
   );
 }
 
-function PlayerBadge({ player, isCurrentTurn, isMe, myTeam }: {
+function TablePlayerBadge({ player, isCurrentTurn, isMe, myTeam }: {
   player: Player; isCurrentTurn: boolean; isMe: boolean; myTeam: number;
 }) {
   const sameTeam = player.team === myTeam;
+  const teamColor = player.team === 1 ? 'blue' : 'red';
   return (
-    <div className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all
-      ${isCurrentTurn ? 'bg-amber-600/30 ring-2 ring-amber-400' : 'bg-black/20'}
-      ${isMe ? 'ring-2 ring-emerald-400' : ''}`}
-    >
-      <div className={`text-sm font-semibold truncate max-w-[80px] ${sameTeam ? 'text-emerald-300' : 'text-rose-300'}`}>
+    <div className={`flex flex-col items-center gap-0.5 transition-all ${isCurrentTurn ? 'scale-110' : ''}`}>
+      {/* Avatar */}
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all
+        ${sameTeam ? 'bg-emerald-800 border-emerald-500' : 'bg-rose-900 border-rose-500'}
+        ${isCurrentTurn ? 'active-turn-glow border-amber-400' : ''}
+        ${isMe ? 'border-emerald-300 ring-2 ring-emerald-400/50' : ''}`}
+      >
+        {(isMe ? 'You' : player.name).charAt(0).toUpperCase()}
+      </div>
+      {/* Name */}
+      <div className={`text-[11px] font-semibold truncate max-w-[72px] text-center leading-tight
+        ${isCurrentTurn ? 'text-amber-300' : sameTeam ? 'text-emerald-300' : 'text-rose-300'}`}
+      >
         {isMe ? 'You' : player.name}
       </div>
-      <div className="text-xs text-gray-400">
-        {player.cardCount} card{player.cardCount !== 1 ? 's' : ''}
+      {/* Card count + Team */}
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] text-gray-400">{player.cardCount}</span>
+        <span className={`text-[9px] px-1.5 py-px rounded-full
+          ${teamColor === 'blue' ? 'bg-blue-900/60 text-blue-300' : 'bg-red-900/60 text-red-300'}`}
+        >
+          T{player.team}
+        </span>
       </div>
-      <div className={`text-[10px] px-2 py-0.5 rounded-full ${player.team === 1 ? 'bg-blue-900/50 text-blue-300' : 'bg-red-900/50 text-red-300'}`}>
-        Team {player.team}
+    </div>
+  );
+}
+
+function GameTable({ game, myTeam }: { game: GameState; myTeam: number }) {
+  // Arrange players around the table: "me" at bottom, others distributed clockwise
+  const meIdx = game.players.findIndex(p => p.id === game.myPlayerId);
+  const count = game.players.length;
+  const arranged: Player[] = [];
+  for (let i = 0; i < count; i++) {
+    arranged.push(game.players[(meIdx + i) % count]);
+  }
+
+  return (
+    <div className={`game-table ${count === 4 ? 'table-4p' : ''}`}>
+      <div className="table-felt">
+        {/* Center info */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-emerald-600/60 text-xs font-mono">#{game.code}</div>
+          <div className="flex gap-3 mt-1 text-xs">
+            <span className="text-blue-400/70">T1: {game.team1Score}</span>
+            <span className="text-red-400/70">T2: {game.team2Score}</span>
+          </div>
+        </div>
       </div>
+      {arranged.map((player, i) => (
+        <div key={player.id} className={`table-player pos-${i}`}>
+          <TablePlayerBadge
+            player={player}
+            isCurrentTurn={player.id === game.currentTurnPlayerId}
+            isMe={player.id === game.myPlayerId}
+            myTeam={myTeam}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -534,8 +581,6 @@ export default function GamePage() {
   const me = game.players.find(p => p.id === game.myPlayerId);
   const myTeam = me?.team || 0;
   const isMyTurn = game.currentTurnPlayerId === game.myPlayerId;
-  const opponents = game.players.filter(p => p.team !== myTeam).sort((a, b) => a.seatPosition - b.seatPosition);
-  const teammates = game.players.filter(p => p.team === myTeam && p.id !== game.myPlayerId).sort((a, b) => a.seatPosition - b.seatPosition);
   const sorted = sortCards(game.myCards);
   const canAsk = isMyTurn && game.myCards.length > 0 && game.status === 'playing' && !game.endgameTeam;
   const canClaim = isMyTurn && game.status === 'playing';
@@ -604,28 +649,8 @@ export default function GamePage() {
       <div className="flex-1 flex flex-col lg:flex-row gap-2 p-2 lg:p-4 overflow-hidden">
         {/* Main game area */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
-          {/* Opponents row */}
-          <div className="bg-black/20 rounded-xl p-3">
-            <div className="text-xs text-rose-400 mb-2 font-semibold">Opponents</div>
-            <div className="flex gap-3 justify-center flex-wrap">
-              {opponents.map(p => (
-                <PlayerBadge key={p.id} player={p} isCurrentTurn={p.id === game.currentTurnPlayerId} isMe={false} myTeam={myTeam} />
-              ))}
-            </div>
-          </div>
-
-          {/* Teammates row */}
-          <div className="bg-black/20 rounded-xl p-3">
-            <div className="text-xs text-emerald-400 mb-2 font-semibold">Your Team</div>
-            <div className="flex gap-3 justify-center flex-wrap">
-              {me && (
-                <PlayerBadge player={me} isCurrentTurn={me.id === game.currentTurnPlayerId} isMe={true} myTeam={myTeam} />
-              )}
-              {teammates.map(p => (
-                <PlayerBadge key={p.id} player={p} isCurrentTurn={p.id === game.currentTurnPlayerId} isMe={false} myTeam={myTeam} />
-              ))}
-            </div>
-          </div>
+          {/* Game table with players */}
+          <GameTable game={game} myTeam={myTeam} />
 
           {/* My cards */}
           <div className="bg-black/20 rounded-xl p-3 flex-shrink-0">
