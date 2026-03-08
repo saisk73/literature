@@ -375,6 +375,48 @@ body {
   }
 }
 
+/* ─── Rules Button ─────────────────────────────────── */
+.rules-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(148, 163, 184, 0.8);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.rules-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+}
+
+/* ─── Rules Sidebar Scrollbar ─────────────────────── */
+.rules-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.rules-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rules-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: 4px;
+}
+
+.rules-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
 /* ─── Profile Button ───────────────────────────────── */
 .profile-btn {
   display: flex;
