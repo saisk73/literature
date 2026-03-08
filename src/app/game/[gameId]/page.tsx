@@ -254,7 +254,7 @@ function PlayerStrip({ game, playerEmoji }: { game: GameState; playerEmoji?: { p
   }, [playerEmoji]);
 
   return (
-    <div ref={stripRef} className="player-strip panel-section">
+    <div ref={stripRef} className="player-strip-grid panel-section">
       {game.players.map(player => {
         const isTurn = player.id === game.currentTurnPlayerId;
         const isMe = player.id === game.myPlayerId;
@@ -265,8 +265,8 @@ function PlayerStrip({ game, playerEmoji }: { game: GameState; playerEmoji?: { p
             className={`player-chip ${isTurn ? 'is-turn' : ''} ${isMe ? 'is-me' : ''}`}
           >
             <PlayerAvatar player={player} size="sm" isTurn={isTurn} />
-            <div className="flex flex-col">
-              <span className={`text-xs sm:text-sm font-medium leading-tight ${isTurn ? 'text-amber-300' : isMe ? 'text-indigo-300' : 'text-slate-300'}`}>
+            <div className="flex flex-col min-w-0">
+              <span className={`text-xs sm:text-sm font-medium leading-tight truncate ${isTurn ? 'text-amber-300' : isMe ? 'text-indigo-300' : 'text-slate-300'}`}>
                 {isMe ? 'You' : player.name}
               </span>
               <div className="flex items-center gap-1.5">
@@ -880,26 +880,15 @@ export default function GamePage() {
           <h1 className="text-amber-400 font-bold text-base sm:text-lg tracking-tight">Literature</h1>
           <span className="text-slate-600 text-[10px] sm:text-xs font-mono bg-black/20 px-1.5 sm:px-2 py-0.5 rounded-md border border-white/5">#{game.code}</span>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs overflow-x-auto scrollbar-hide flex-shrink min-w-0">
-          {game.players
-            .map(p => ({ ...p, score: game.scores[p.id] || 0 }))
-            .sort((a, b) => b.score - a.score)
-            .map(p => (
-              <span key={p.id} className={`score-badge ${p.id === game.myPlayerId ? 'text-amber-300' : 'text-slate-400'}`}>
-                {p.avatar && <span className="mr-0.5 sm:mr-1">{p.avatar}</span>}
-                <span className="hidden sm:inline">{p.id === game.myPlayerId ? 'You' : p.name}: </span>{p.score}
-              </span>
-            ))}
-          <button
-            onClick={() => setShowProfileEdit(true)}
-            className="profile-btn ml-0.5 sm:ml-1 flex-shrink-0"
-            title="Edit Profile"
-          >
-            <span className="avatar-circle sm">
-              {myAvatar || myName.charAt(0).toUpperCase() || '?'}
-            </span>
-          </button>
-        </div>
+        <button
+          onClick={() => setShowProfileEdit(true)}
+          className="profile-btn flex-shrink-0"
+          title="Edit Profile"
+        >
+          <span className="avatar-circle sm">
+            {myAvatar || myName.charAt(0).toUpperCase() || '?'}
+          </span>
+        </button>
       </header>
 
       {/* Game Finished Banner */}
