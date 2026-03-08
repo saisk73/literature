@@ -118,8 +118,13 @@ export async function POST(
   // Check if all 8 half-suits claimed
   const claimCount = await db.collection('game_claims').countDocuments({ game_id: game._id });
 
-  // Find next player with cards for turn
-  const nextTurnPlayer = await findNextPlayerWithCards(db, game._id, players, visitorId);
+  // On correct claim, same player keeps turn (if they have cards); on forfeit, move to next
+  const claimerHasCards = allCorrect
+    ? (await db.collection('game_cards').countDocuments({ game_id: game._id, holder_id: visitorId })) > 0
+    : false;
+  const nextTurnPlayer = claimerHasCards
+    ? visitorId
+    : await findNextPlayerWithCards(db, game._id, players, visitorId);
 
   let logMessage = '';
   if (result === 'correct') {
