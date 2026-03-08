@@ -34,6 +34,7 @@ interface GameState {
   team1Score: number;
   team2Score: number;
   winner: number | null;
+  showLog: boolean;
   updatedAt: string;
   isPlayer: boolean;
   myPlayerId: string;
@@ -691,17 +692,19 @@ export default function GamePage() {
           </div>
 
           {/* Game log */}
-          <div className="bg-black/20 rounded-xl p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
-            <div className="text-xs text-emerald-500 mb-2 font-semibold">Game Log</div>
-            <div className="overflow-y-auto flex-1 space-y-1 text-xs">
-              {game.logs.map((log, i) => (
-                <div key={i} className="text-emerald-400/80 py-0.5 border-b border-emerald-900/50">
-                  {log.details?.message || log.action}
-                </div>
-              ))}
-              {game.logs.length === 0 && <div className="text-emerald-700">No actions yet</div>}
+          {game.showLog && (
+            <div className="bg-black/20 rounded-xl p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+              <div className="text-xs text-emerald-500 mb-2 font-semibold">Game Log</div>
+              <div className="overflow-y-auto flex-1 space-y-1 text-xs">
+                {game.logs.map((log, i) => (
+                  <div key={i} className="text-emerald-400/80 py-0.5 border-b border-emerald-900/50">
+                    {log.details?.message || log.action}
+                  </div>
+                ))}
+                {game.logs.length === 0 && <div className="text-emerald-700">No actions yet</div>}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

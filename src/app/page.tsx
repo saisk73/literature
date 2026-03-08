@@ -9,6 +9,7 @@ export default function HomePage() {
   const [savedName, setSavedName] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [playerCount, setPlayerCount] = useState<4 | 6>(6);
+  const [showLog, setShowLog] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -46,7 +47,7 @@ export default function HomePage() {
     const res = await fetch('/api/games', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ maxPlayers: playerCount }),
+      body: JSON.stringify({ maxPlayers: playerCount, showLog }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -157,6 +158,21 @@ export default function HomePage() {
                 {playerCount === 4 ? '2 teams of 2 · 12 cards each' : '2 teams of 3 · 8 cards each'}
               </div>
             </div>
+
+            <div className="flex items-center justify-between px-1">
+              <label className="text-sm text-emerald-300">Game Log</label>
+              <button
+                onClick={() => setShowLog(!showLog)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${showLog ? 'bg-amber-600' : 'bg-emerald-800'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${showLog ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
+            {!showLog && (
+              <div className="text-xs text-emerald-600 text-center">
+                Game log will be hidden for all players
+              </div>
+            )}
 
             <button
               onClick={createGame}

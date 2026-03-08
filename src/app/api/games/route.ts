@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}));
   const maxPlayers = body.maxPlayers === 4 ? 4 : 6;
+  const showLog = body.showLog !== false;
 
   let code = generateGameCode();
   while (await db.collection('games').findOne({ code })) {
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
     team1_score: 0,
     team2_score: 0,
     winner: null,
+    show_log: showLog,
     created_at: now,
     updated_at: now,
   });

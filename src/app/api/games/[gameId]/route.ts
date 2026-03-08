@@ -93,6 +93,7 @@ export async function GET(
     team1Score: game.team1_score,
     team2Score: game.team2_score,
     winner: game.winner,
+    showLog: game.show_log !== false,
     updatedAt: game.updated_at,
     isPlayer,
     myPlayerId: visitorId,
