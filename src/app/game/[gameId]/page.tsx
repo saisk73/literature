@@ -917,19 +917,19 @@ export default function GamePage() {
           </div>
 
           {/* Game Log */}
-          {game.showLog && (
-            <div className="panel-section p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
-              <div className="text-xs text-slate-500 mb-2 font-semibold tracking-wide uppercase">Game Log</div>
-              <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
-                {game.logs.map((log, i) => (
-                  <div key={i} className="text-slate-500 py-1 border-b border-white/5">
-                    {log.details?.message || log.action}
-                  </div>
-                ))}
-                {game.logs.length === 0 && <div className="text-slate-700">No actions yet</div>}
-              </div>
+          <div className="panel-section p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="text-xs text-slate-500 mb-2 font-semibold tracking-wide uppercase">
+              {game.showLog ? 'Game Log' : 'Recent Activity'}
             </div>
-          )}
+            <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
+              {(game.showLog ? game.logs : game.logs.slice(-2)).map((log, i) => (
+                <div key={i} className="text-slate-500 py-1 border-b border-white/5">
+                  {log.details?.message || log.action}
+                </div>
+              ))}
+              {game.logs.length === 0 && <div className="text-slate-700">No actions yet</div>}
+            </div>
+          </div>
         </div>
       </div>
 
