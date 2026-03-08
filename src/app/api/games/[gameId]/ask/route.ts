@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVisitorId } from '@/lib/auth';
 import { getDb } from '@/lib/db';
-import { getHalfSuit } from '@/lib/game-logic';
+import { getHalfSuit, getHalfSuitCards, getHalfSuitDisplayName, getAllHalfSuits } from '@/lib/game-logic';
 
 export async function POST(
   request: NextRequest,
@@ -96,6 +96,109 @@ export async function POST(
       details: { target: targetPlayerId, targetName, card, askerName, message: `${askerName} asked ${targetName} for ${card} - Got it!` },
       created_at: new Date(),
     });
+
+    // Auto-claim: check if asker now holds all 6 cards of the half-suit
+    const hs = getHalfSuit(card);
+    const hsCards = getHalfSuitCards(hs);
+    const askerHsCards = await db.collection('game_cards').find({
+      game_id: game._id,
+      card: { $in: hsCards },
+      holder_id: visitorId,
+    }).toArray();
+
+    if (askerHsCards.length === 6) {
+      // Check not already claimed
+      const existingClaim = await db.collection('game_claims').findOne({
+        game_id: game._id,
+        half_suit: hs,
+      });
+
+      if (!existingClaim) {
+        const hsName = getHalfSuitDisplayName(hs);
+
+        // Record claim
+        await db.collection('game_claims').insertOne({
+          game_id: game._id,
+          half_suit: hs,
+          claimed_by: visitorId,
+          claimed_at: new Date(),
+        });
+
+        // Remove cards from game
+        await db.collection('game_cards').deleteMany({
+          game_id: game._id,
+          card: { $in: hsCards },
+        });
+
+        await db.collection('game_log').insertOne({
+          game_id: game._id,
+          action: 'auto_claim',
+          player_id: visitorId,
+          details: { halfSuit: hs, result: 'correct', claimedBy: visitorId, claimerName: askerName, message: `${askerName} collected all cards and auto-claimed ${hsName}!` },
+          created_at: new Date(),
+        });
+
+        // Check if all 8 half-suits claimed
+        const claimCount = await db.collection('game_claims').countDocuments({ game_id: game._id });
+        if (claimCount >= 8) {
+          const allClaims = await db.collection('game_claims').find({ game_id: game._id }).toArray();
+          const scores: Record<string, number> = {};
+          for (const p of players) scores[p.player_id] = 0;
+          for (const c of allClaims) {
+            if (c.claimed_by) scores[c.claimed_by] = (scores[c.claimed_by] || 0) + 1;
+          }
+          const maxScore = Math.max(...Object.values(scores));
+          const topPlayers = Object.entries(scores).filter(([, s]) => s === maxScore);
+          const winner = topPlayers.length === 1 ? topPlayers[0][0] : 'tie';
+          const winnerName = winner !== 'tie'
+            ? (await db.collection('users').findOne({ _id: winner as any }))?.display_name || ''
+            : '';
+
+          await db.collection('games').updateOne(
+            { _id: game._id },
+            { $set: { status: 'finished', winner, current_turn_player_id: null, updated_at: new Date() } }
+          );
+          await db.collection('game_log').insertOne({
+            game_id: game._id,
+            action: 'game_over',
+            player_id: null,
+            details: { message: winner === 'tie' ? "Game over! It's a tie!" : `Game over! ${winnerName} wins!`, scores },
+            created_at: new Date(),
+          });
+        } else {
+          // Check if current player still has cards
+          const remainingCards = await db.collection('game_cards').countDocuments({
+            game_id: game._id,
+            holder_id: visitorId,
+          });
+          if (remainingCards === 0) {
+            // Find next player with cards
+            const sorted = [...players].sort((a, b) => a.seat_position - b.seat_position);
+            const currentIdx = sorted.findIndex(p => p.player_id === visitorId);
+            let nextPlayer: string | null = null;
+            for (let i = 1; i <= sorted.length; i++) {
+              const nextIdx = (currentIdx + i) % sorted.length;
+              const np = sorted[nextIdx];
+              const cc = await db.collection('game_cards').countDocuments({
+                game_id: game._id, holder_id: np.player_id,
+              });
+              if (cc > 0) { nextPlayer = np.player_id; break; }
+            }
+            if (nextPlayer) {
+              await db.collection('games').updateOne(
+                { _id: game._id },
+                { $set: { current_turn_player_id: nextPlayer, updated_at: new Date() } }
+              );
+            }
+          } else {
+            await db.collection('games').updateOne(
+              { _id: game._id },
+              { $set: { updated_at: new Date() } }
+            );
+          }
+        }
+      }
+    }
 
     return NextResponse.json({ ok: true, gotCard: true });
   } else {
