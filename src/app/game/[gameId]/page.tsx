@@ -946,6 +946,33 @@ export default function GamePage() {
               </button>
             </div>
           )}
+
+          {/* Game Log */}
+          <div className="panel-section p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <div className="text-xs text-slate-500 mb-2 font-semibold tracking-wide uppercase">
+              {game.showLog ? 'Game Log' : 'Recent Activity'}
+            </div>
+            <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
+              {game.logs.map((log, i) => {
+                const icon = getLogIcon(log.action);
+                const logCard = log.details?.card as string | undefined;
+                const isSuccess = log.action === 'ask_success' || log.action === 'claim' || log.action === 'auto_claim';
+                const isFail = log.action === 'ask_fail' || (log.action === 'claim' && log.details?.result === 'forfeited');
+                return (
+                  <div key={i} className={`flex items-center gap-2 py-1.5 border-b border-white/5 ${isSuccess ? 'text-green-400/80' : isFail ? 'text-red-400/70' : 'text-slate-500'}`}>
+                    <span className="text-base flex-shrink-0">{icon}</span>
+                    {logCard && (
+                      <span className="flex-shrink-0">
+                        <CardView card={logCard} small />
+                      </span>
+                    )}
+                    <span className="leading-snug">{log.details?.message || log.action}</span>
+                  </div>
+                );
+              })}
+              {game.logs.length === 0 && <div className="text-slate-700">No actions yet</div>}
+            </div>
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -984,33 +1011,6 @@ export default function GamePage() {
                     <span className="text-slate-700 text-xs">unclaimed</span>
                   </div>
                 ))}
-            </div>
-          </div>
-
-          {/* Game Log */}
-          <div className="panel-section p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
-            <div className="text-xs text-slate-500 mb-2 font-semibold tracking-wide uppercase">
-              {game.showLog ? 'Game Log' : 'Recent Activity'}
-            </div>
-            <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
-              {game.logs.map((log, i) => {
-                const icon = getLogIcon(log.action);
-                const logCard = log.details?.card as string | undefined;
-                const isSuccess = log.action === 'ask_success' || log.action === 'claim' || log.action === 'auto_claim';
-                const isFail = log.action === 'ask_fail' || (log.action === 'claim' && log.details?.result === 'forfeited');
-                return (
-                  <div key={i} className={`flex items-center gap-2 py-1.5 border-b border-white/5 ${isSuccess ? 'text-green-400/80' : isFail ? 'text-red-400/70' : 'text-slate-500'}`}>
-                    <span className="text-base flex-shrink-0">{icon}</span>
-                    {logCard && (
-                      <span className="flex-shrink-0">
-                        <CardView card={logCard} small />
-                      </span>
-                    )}
-                    <span className="leading-snug">{log.details?.message || log.action}</span>
-                  </div>
-                );
-              })}
-              {game.logs.length === 0 && <div className="text-slate-700">No actions yet</div>}
             </div>
           </div>
         </div>
