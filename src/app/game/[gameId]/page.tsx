@@ -13,6 +13,69 @@ const AVATARS = [
   '👑','💫','🌸','🎸','🚀','🌊','🎵','🍕','👻','💀',
 ];
 
+// ─── Sound Helpers ──────────────────────────────────
+function getSoundEnabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('literature_sound') === 'true';
+}
+
+function setSoundEnabled(enabled: boolean) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('literature_sound', enabled ? 'true' : 'false');
+  }
+}
+
+function playTone(frequency: number, duration: number, type: OscillatorType = 'sine') {
+  if (!getSoundEnabled()) return;
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = frequency;
+    gain.gain.value = 0.15;
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch { /* audio not available */ }
+}
+
+function playCardTransferSound() {
+  playTone(523, 0.15, 'sine');
+  setTimeout(() => playTone(659, 0.15, 'sine'), 100);
+}
+
+function playCardFailSound() {
+  playTone(330, 0.2, 'triangle');
+  setTimeout(() => playTone(262, 0.3, 'triangle'), 150);
+}
+
+function playClaimSound() {
+  playTone(523, 0.1, 'sine');
+  setTimeout(() => playTone(659, 0.1, 'sine'), 80);
+  setTimeout(() => playTone(784, 0.2, 'sine'), 160);
+}
+
+function playForfeitSound() {
+  playTone(330, 0.3, 'sawtooth');
+}
+
+// ─── Log Action Icons ───────────────────────────────
+function getLogIcon(action: string): string {
+  switch (action) {
+    case 'ask_success': return '🃏';
+    case 'ask_fail': return '✋';
+    case 'claim': return '🏆';
+    case 'auto_claim': return '⭐';
+    case 'game_over': return '🎉';
+    case 'game_start': return '🎮';
+    case 'deal': return '🎴';
+    default: return '📝';
+  }
+}
+
 // ─── Types ───────────────────────────────────────────
 interface Player {
   id: string;
@@ -431,9 +494,9 @@ function ClaimDialog({ game, onClose, onClaim }: {
 }
 
 // ─── Profile Edit Dialog ─────────────────────────────
-function ProfileEditDialog({ currentName, currentAvatar, onClose, onSave }: {
-  currentName: string; currentAvatar: string;
-  onClose: () => void; onSave: (name: string, avatar: string) => void;
+function ProfileEditDialog({ currentName, currentAvatar, soundEnabled, onClose, onSave, onToggleSound }: {
+  currentName: string; currentAvatar: string; soundEnabled: boolean;
+  onClose: () => void; onSave: (name: string, avatar: string) => void; onToggleSound: () => void;
 }) {
   const [name, setName] = useState(currentName);
   const [avatar, setAvatar] = useState(currentAvatar);
@@ -522,6 +585,25 @@ function ProfileEditDialog({ currentName, currentAvatar, onClose, onSave }: {
             />
           </div>
 
+          <div>
+            <label className="block text-sm text-slate-400 mb-2 font-medium">Sound Settings</label>
+            <button
+              type="button"
+              onClick={onToggleSound}
+              className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all border ${
+                soundEnabled
+                  ? 'bg-amber-900/30 border-amber-600/30 text-amber-300'
+                  : 'bg-[rgba(15,15,30,0.6)] border-white/10 text-slate-400'
+              }`}
+            >
+              <span className="text-xl">{soundEnabled ? '🔊' : '🔇'}</span>
+              <span className="text-sm font-medium">{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
+              <div className={`ml-auto w-10 h-5 rounded-full transition-all relative ${soundEnabled ? 'bg-amber-600' : 'bg-slate-700'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${soundEnabled ? 'left-5' : 'left-0.5'}`} />
+              </div>
+            </button>
+          </div>
+
           <div className="flex gap-3">
             <button onClick={handleClose} className="btn-secondary flex-1 py-2.5">Cancel</button>
             <button
@@ -547,9 +629,8 @@ export default function GamePage() {
   const [game, setGame] = useState<GameState | null>(null);
   const [error, setError] = useState('');
   const [showAsk, setShowAsk] = useState(false);
-  const [showClaim, setShowClaim] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-  const [actionMsg, setActionMsg] = useState('');
+  const [actionAlert, setActionAlert] = useState<ActionAlertData | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsName, setNeedsName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -558,12 +639,18 @@ export default function GamePage() {
   const [myName, setMyName] = useState('');
   const [myAvatar, setMyAvatar] = useState('');
   const [playerEmoji, setPlayerEmoji] = useState<{ playerId: string; emoji: string } | null>(null);
+  const [soundOn, setSoundOn] = useState(false);
   const prevUpdatedAt = useRef('');
   const cardsRef = useRef<HTMLDivElement>(null);
   const actionBtnsRef = useRef<HTMLDivElement>(null);
   const prevCardCount = useRef(0);
   const prevLogCount = useRef(0);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initialize sound setting from localStorage
+  useEffect(() => {
+    setSoundOn(getSoundEnabled());
+  }, []);
 
   const fetchGame = useCallback(async () => {
     try {
@@ -580,12 +667,23 @@ export default function GamePage() {
         if (prevLogCount.current > 0 && data.logs.length > prevLogCount.current) {
           const newLogs = data.logs.slice(prevLogCount.current);
           const alertLog = newLogs.find(l =>
-            l.action === 'ask_success' || l.action === 'ask_fail' || l.action === 'claim'
+            l.action === 'ask_success' || l.action === 'ask_fail' || l.action === 'claim' || l.action === 'auto_claim'
           );
           if (alertLog?.details?.message) {
-            setActionMsg(alertLog.details.message as string);
+            setActionAlert({
+              message: alertLog.details.message as string,
+              card: alertLog.details?.card as string | undefined,
+              type: alertLog.action,
+            });
             if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-            dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
+            dismissTimerRef.current = setTimeout(() => setActionAlert(null), 10000);
+
+            // Play sounds
+            if (alertLog.action === 'ask_success') playCardTransferSound();
+            else if (alertLog.action === 'ask_fail') playCardFailSound();
+            else if (alertLog.action === 'claim' && alertLog.details?.result === 'correct') playClaimSound();
+            else if (alertLog.action === 'auto_claim') playClaimSound();
+            else if (alertLog.action === 'claim' && alertLog.details?.result === 'forfeited') playForfeitSound();
           }
           // Cry emoji on forfeited claim
           const forfeitLog = newLogs.find(l =>
@@ -593,6 +691,11 @@ export default function GamePage() {
           );
           if (forfeitLog) {
             setPlayerEmoji({ playerId: forfeitLog.playerId, emoji: '😢' });
+          }
+          // Star emoji on auto-claim
+          const autoClaimLog = newLogs.find(l => l.action === 'auto_claim');
+          if (autoClaimLog) {
+            setPlayerEmoji({ playerId: autoClaimLog.playerId, emoji: '⭐' });
           }
         }
         prevLogCount.current = data.logs.length;
@@ -711,21 +814,6 @@ export default function GamePage() {
     }
   }
 
-  async function handleClaim(halfSuit: string, assignments: Record<string, string>) {
-    setShowClaim(false);
-    const res = await fetch(`/api/games/${gameId}/claim`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ halfSuit, assignments }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      prevUpdatedAt.current = '';
-      fetchGame();
-    } else {
-      setError(data.error);
-    }
-  }
 
   // ─── Render States ─────────────────────────────
   if (loading) {
@@ -773,7 +861,7 @@ export default function GamePage() {
   const isMyTurn = game.currentTurnPlayerId === game.myPlayerId;
   const sorted = sortCards(game.myCards);
   const canAsk = isMyTurn && game.myCards.length > 0 && game.status === 'playing';
-  const canClaim = isMyTurn && game.status === 'playing';
+  // Claims are now automatic when a player collects all 6 cards
   const turnPlayer = game.players.find(p => p.id === game.currentTurnPlayerId);
 
   // Group cards by suit for display
@@ -820,12 +908,12 @@ export default function GamePage() {
       {/* Turn Indicator */}
       {game.status === 'playing' && (
         <div className={`px-4 py-2.5 text-center text-sm font-medium ${isMyTurn ? 'turn-banner text-amber-300' : 'bg-black/15 text-slate-500 border-b border-white/5'}`}>
-          {isMyTurn ? "Your turn - ask for a card or claim a set" : `Waiting for ${turnPlayer?.name || '...'}...`}
+          {isMyTurn ? "Your turn - ask for a card" : `Waiting for ${turnPlayer?.name || '...'}...`}
         </div>
       )}
 
       {/* Action Alert */}
-      <ActionAlert message={actionMsg} onDismiss={() => setActionMsg('')} />
+      <ActionAlert alert={actionAlert} onDismiss={() => setActionAlert(null)} />
 
       {/* Error */}
       {error && (
@@ -866,13 +954,6 @@ export default function GamePage() {
                 className="btn-primary px-4 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-lg flex-1 sm:flex-none"
               >
                 Ask for a Card
-              </button>
-              <button
-                onClick={() => setShowClaim(true)}
-                disabled={!canClaim}
-                className="btn-secondary px-4 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-lg font-semibold flex-1 sm:flex-none"
-              >
-                Claim a Set
               </button>
             </div>
           )}
@@ -923,11 +1004,23 @@ export default function GamePage() {
               {game.showLog ? 'Game Log' : 'Recent Activity'}
             </div>
             <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
-              {game.logs.map((log, i) => (
-                <div key={i} className="text-slate-500 py-1 border-b border-white/5">
-                  {log.details?.message || log.action}
-                </div>
-              ))}
+              {game.logs.map((log, i) => {
+                const icon = getLogIcon(log.action);
+                const logCard = log.details?.card as string | undefined;
+                const isSuccess = log.action === 'ask_success' || log.action === 'claim' || log.action === 'auto_claim';
+                const isFail = log.action === 'ask_fail' || (log.action === 'claim' && log.details?.result === 'forfeited');
+                return (
+                  <div key={i} className={`flex items-center gap-2 py-1.5 border-b border-white/5 ${isSuccess ? 'text-green-400/80' : isFail ? 'text-red-400/70' : 'text-slate-500'}`}>
+                    <span className="text-base flex-shrink-0">{icon}</span>
+                    {logCard && (
+                      <span className="flex-shrink-0">
+                        <CardView card={logCard} small />
+                      </span>
+                    )}
+                    <span className="leading-snug">{log.details?.message || log.action}</span>
+                  </div>
+                );
+              })}
               {game.logs.length === 0 && <div className="text-slate-700">No actions yet</div>}
             </div>
           </div>
@@ -936,17 +1029,22 @@ export default function GamePage() {
 
       {/* Dialogs */}
       {showAsk && <AskDialog game={game} onClose={() => setShowAsk(false)} onAsk={handleAsk} />}
-      {showClaim && <ClaimDialog game={game} onClose={() => setShowClaim(false)} onClaim={handleClaim} />}
       {showProfileEdit && (
         <ProfileEditDialog
           currentName={myName}
           currentAvatar={myAvatar}
+          soundEnabled={soundOn}
           onClose={() => setShowProfileEdit(false)}
           onSave={(name, avatar) => {
             setMyName(name);
             setMyAvatar(avatar);
             prevUpdatedAt.current = '';
             fetchGame();
+          }}
+          onToggleSound={() => {
+            const newVal = !soundOn;
+            setSoundOn(newVal);
+            setSoundEnabled(newVal);
           }}
         />
       )}
@@ -955,12 +1053,18 @@ export default function GamePage() {
 }
 
 // ─── Action Alert ────────────────────────────────────
-function ActionAlert({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+interface ActionAlertData {
+  message: string;
+  card?: string;
+  type?: 'ask_success' | 'ask_fail' | 'claim' | 'auto_claim' | 'game_over' | string;
+}
+
+function ActionAlert({ alert, onDismiss }: { alert: ActionAlertData | null; onDismiss: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!message || !ref.current) return;
+    if (!alert?.message || !ref.current) return;
     gsap.fromTo(ref.current,
       { y: -30, opacity: 0, scale: 0.95 },
       { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.5)' }
@@ -982,15 +1086,30 @@ function ActionAlert({ message, onDismiss }: { message: string; onDismiss: () =>
       }
     }, 10000);
     return () => clearTimeout(timer);
-  }, [message, onDismiss]);
+  }, [alert, onDismiss]);
 
-  if (!message) return null;
+  if (!alert?.message) return null;
+
+  const isSuccess = alert.type === 'ask_success' || alert.type === 'claim' || alert.type === 'auto_claim';
+  const isFail = alert.type === 'ask_fail';
+  const borderColor = isSuccess ? 'border-green-500/30' : isFail ? 'border-red-500/30' : 'border-amber-500/20';
+  const icon = alert.type === 'ask_success' ? '🃏' : alert.type === 'ask_fail' ? '✋' : alert.type === 'claim' || alert.type === 'auto_claim' ? '🏆' : '';
 
   return (
-    <div className="fixed top-2 sm:top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1rem)] sm:w-auto sm:max-w-md pointer-events-auto">
-      <div ref={ref} className="action-alert glass-panel rounded-xl px-4 sm:px-6 py-3 sm:py-4 text-center shadow-2xl border border-amber-500/20 relative overflow-hidden">
-        <div className="text-amber-200 text-sm sm:text-base font-semibold">{message}</div>
-        <div ref={progressRef} className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400/40 origin-left" />
+    <div className="fixed top-2 sm:top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1rem)] sm:w-auto sm:max-w-lg pointer-events-auto">
+      <div ref={ref} className={`action-alert glass-panel rounded-xl px-4 sm:px-8 py-4 sm:py-5 text-center shadow-2xl ${borderColor} border relative overflow-hidden`}>
+        <div className="flex items-center justify-center gap-3">
+          {icon && <span className="text-2xl sm:text-3xl">{icon}</span>}
+          {alert.card && (
+            <div className="flex-shrink-0">
+              <CardView card={alert.card} small />
+            </div>
+          )}
+          <div className={`text-base sm:text-lg font-bold ${isSuccess ? 'text-green-300' : isFail ? 'text-red-300' : 'text-amber-200'}`}>
+            {alert.message}
+          </div>
+        </div>
+        <div ref={progressRef} className={`absolute bottom-0 left-0 right-0 h-0.5 ${isSuccess ? 'bg-green-400/40' : isFail ? 'bg-red-400/40' : 'bg-amber-400/40'} origin-left`} />
       </div>
     </div>
   );
