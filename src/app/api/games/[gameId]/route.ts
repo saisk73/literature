@@ -38,6 +38,7 @@ export async function GET(
           player_id: 1,
           seat_position: 1,
           display_name: '$user.display_name',
+          avatar: '$user.avatar',
         },
       },
       { $sort: { seat_position: 1 } },
@@ -97,6 +98,7 @@ export async function GET(
     players: players.map((p) => ({
       id: p.player_id,
       name: p.display_name,
+      avatar: p.avatar || '',
       seatPosition: p.seat_position,
       cardCount: cardCounts[p.player_id] || 0,
     })),
