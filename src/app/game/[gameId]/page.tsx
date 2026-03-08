@@ -49,8 +49,12 @@ function playCardTransferSound() {
 }
 
 function playCardFailSound() {
-  playTone(330, 0.2, 'triangle');
-  setTimeout(() => playTone(262, 0.3, 'triangle'), 150);
+  if (!getSoundEnabled()) return;
+  try {
+    const audio = new Audio('/sounds/fahhh.mp3');
+    audio.volume = 0.5;
+    audio.play();
+  } catch { /* audio not available */ }
 }
 
 function playClaimSound() {
