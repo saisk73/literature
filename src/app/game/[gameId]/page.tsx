@@ -131,8 +131,9 @@ function CardView({ card, onClick, selected, small }: {
 }
 
 // ─── Player Strip ────────────────────────────────────
-function PlayerStrip({ game }: { game: GameState }) {
+function PlayerStrip({ game, playerEmoji }: { game: GameState; playerEmoji?: { playerId: string; emoji: string } | null }) {
   const stripRef = useRef<HTMLDivElement>(null);
+  const prevCounts = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (stripRef.current) {
@@ -144,6 +145,51 @@ function PlayerStrip({ game }: { game: GameState }) {
     }
   }, []);
 
+  // +1/-1 card delta animations
+  useEffect(() => {
+    if (!stripRef.current) return;
+    for (const player of game.players) {
+      const prev = prevCounts.current[player.id];
+      if (prev !== undefined && prev !== player.cardCount) {
+        const delta = player.cardCount - prev;
+        const chip = stripRef.current.querySelector(`[data-player-id="${player.id}"]`);
+        if (chip) {
+          const el = document.createElement('span');
+          el.className = 'card-delta';
+          el.textContent = delta > 0 ? `+${delta}` : `${delta}`;
+          el.style.color = delta > 0 ? '#4ade80' : '#f87171';
+          (chip as HTMLElement).style.position = 'relative';
+          chip.appendChild(el);
+          gsap.fromTo(el,
+            { y: 0, opacity: 1, scale: 1 },
+            { y: -28, opacity: 0, scale: 1.3, duration: 1.4, ease: 'power2.out', onComplete: () => el.remove() }
+          );
+        }
+      }
+    }
+    const counts: Record<string, number> = {};
+    for (const p of game.players) counts[p.id] = p.cardCount;
+    prevCounts.current = counts;
+  }, [game.players, game.updatedAt]);
+
+  // Emoji animation (cry on wrong claim, etc.)
+  useEffect(() => {
+    if (!playerEmoji || !stripRef.current) return;
+    const chip = stripRef.current.querySelector(`[data-player-id="${playerEmoji.playerId}"]`);
+    if (chip) {
+      const el = document.createElement('span');
+      el.className = 'card-delta';
+      el.textContent = playerEmoji.emoji;
+      el.style.fontSize = '1.2rem';
+      (chip as HTMLElement).style.position = 'relative';
+      chip.appendChild(el);
+      gsap.fromTo(el,
+        { y: 0, opacity: 1, scale: 0.5 },
+        { y: -32, opacity: 0, scale: 1.8, duration: 2, ease: 'power2.out', onComplete: () => el.remove() }
+      );
+    }
+  }, [playerEmoji]);
+
   return (
     <div ref={stripRef} className="player-strip panel-section">
       {game.players.map(player => {
@@ -152,6 +198,7 @@ function PlayerStrip({ game }: { game: GameState }) {
         return (
           <div
             key={player.id}
+            data-player-id={player.id}
             className={`player-chip ${isTurn ? 'is-turn' : ''} ${isMe ? 'is-me' : ''}`}
           >
             <PlayerAvatar player={player} size="sm" isTurn={isTurn} />
@@ -510,6 +557,7 @@ export default function GamePage() {
   const [nameLoading, setNameLoading] = useState(false);
   const [myName, setMyName] = useState('');
   const [myAvatar, setMyAvatar] = useState('');
+  const [playerEmoji, setPlayerEmoji] = useState<{ playerId: string; emoji: string } | null>(null);
   const prevUpdatedAt = useRef('');
   const cardsRef = useRef<HTMLDivElement>(null);
   const actionBtnsRef = useRef<HTMLDivElement>(null);
@@ -537,6 +585,13 @@ export default function GamePage() {
             setActionMsg(alertLog.details.message as string);
             if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
             dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
+          }
+          // Cry emoji on forfeited claim
+          const forfeitLog = newLogs.find(l =>
+            l.action === 'claim' && l.details?.result === 'forfeited'
+          );
+          if (forfeitLog) {
+            setPlayerEmoji({ playerId: forfeitLog.playerId, emoji: '😢' });
           }
         }
         prevLogCount.current = data.logs.length;
@@ -648,9 +703,6 @@ export default function GamePage() {
     });
     const data = await res.json();
     if (res.ok) {
-      setActionMsg(data.gotCard ? 'Got the card!' : 'They don\'t have it. Turn passed.');
-      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-      dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
       prevUpdatedAt.current = '';
       fetchGame();
     } else {
@@ -667,13 +719,6 @@ export default function GamePage() {
     });
     const data = await res.json();
     if (res.ok) {
-      const msgs: Record<string, string> = {
-        correct: 'Correct! You win the set!',
-        forfeited: 'Wrong distribution. Set forfeited!',
-      };
-      setActionMsg(msgs[data.result] || 'Claimed.');
-      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-      dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
       prevUpdatedAt.current = '';
       fetchGame();
     } else {
@@ -792,7 +837,7 @@ export default function GamePage() {
         {/* Main Game Area */}
         <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0">
           {/* Player Strip */}
-          <PlayerStrip game={game} />
+          <PlayerStrip game={game} playerEmoji={playerEmoji} />
 
           {/* My Cards */}
           <div className="panel-section p-2.5 sm:p-4 flex-shrink-0">

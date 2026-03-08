@@ -352,6 +352,20 @@ body {
   border-color: rgba(255, 255, 255, 0.06);
 }
 
+/* ─── Card Delta Animation ─────────────────────────── */
+.card-delta {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 800;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 10;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
 /* ─── Scoreboard Badge ──────────────────────────────── */
 .score-badge {
   background: rgba(15, 15, 30, 0.5);
