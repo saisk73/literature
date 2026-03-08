@@ -493,6 +493,107 @@ function ClaimDialog({ game, onClose, onClaim }: {
   );
 }
 
+// ─── Rules Sidebar ──────────────────────────────────
+function RulesSidebar({ onClose }: { onClose: () => void }) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+    gsap.fromTo(panelRef.current, { x: '100%' }, { x: '0%', duration: 0.3, ease: 'power2.out' });
+  }, []);
+
+  function handleClose() {
+    const tl = gsap.timeline({ onComplete: onClose });
+    tl.to(panelRef.current, { x: '100%', duration: 0.25, ease: 'power2.in' });
+    tl.to(overlayRef.current, { opacity: 0, duration: 0.15 }, '-=0.1');
+  }
+
+  return (
+    <div ref={overlayRef} className="fixed inset-0 bg-black/60 dialog-backdrop z-50" onClick={handleClose}>
+      <div
+        ref={panelRef}
+        className="absolute right-0 top-0 h-full w-full max-w-md bg-[rgba(12,10,24,0.97)] border-l border-white/10 overflow-y-auto rules-sidebar"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="sticky top-0 bg-[rgba(12,10,24,0.97)] border-b border-white/10 px-5 py-4 flex items-center justify-between z-10">
+          <h2 className="text-lg font-bold text-amber-400">How to Play Literature</h2>
+          <button onClick={handleClose} className="text-slate-400 hover:text-white transition-colors text-xl leading-none p-1">&times;</button>
+        </div>
+
+        <div className="px-5 py-4 space-y-5 text-sm text-slate-300 leading-relaxed">
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Overview</h3>
+            <p>Literature is a team-based card game for 6 or 8 players. Players split into two teams and try to collect &ldquo;half-suits&rdquo; by asking opponents for specific cards.</p>
+          </section>
+
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">The Deck</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+              <li>Uses a standard 48-card deck (no 7s)</li>
+              <li>Each suit is split into two <strong className="text-slate-200">half-suits</strong> of 6 cards each</li>
+              <li><strong className="text-slate-200">Low</strong>: A, 2, 3, 4, 5, 6</li>
+              <li><strong className="text-slate-200">High</strong>: 8, 9, 10, J, Q, K</li>
+              <li>There are 8 half-suits total (4 suits &times; 2)</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Teams &amp; Seating</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+              <li>Players are divided into Team 1 and Team 2</li>
+              <li>Teammates sit in alternating seats around the table</li>
+              <li>Cards are dealt evenly to all players</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Asking for Cards</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+              <li>On your turn, ask any <strong className="text-slate-200">opponent</strong> for a specific card</li>
+              <li>You must hold at least one card from the same half-suit</li>
+              <li>You <strong className="text-slate-200">cannot</strong> ask for a card you already have</li>
+              <li><strong className="text-slate-200">Success</strong>: You get the card and take another turn</li>
+              <li><strong className="text-slate-200">Fail</strong>: The turn passes to the player you asked</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Claiming Half-Suits</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+              <li>Any player can attempt to claim a half-suit at any time</li>
+              <li>To claim, declare which teammate holds each of the 6 cards</li>
+              <li><strong className="text-slate-200">Correct claim</strong>: Your team scores 1 point</li>
+              <li><strong className="text-slate-200">Wrong claim</strong>: The opposing team scores 1 point</li>
+              <li>If your team holds all 6 cards of a half-suit, it&apos;s <strong className="text-slate-200">auto-claimed</strong></li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Winning</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+              <li>The game ends when all 8 half-suits have been claimed</li>
+              <li>The team with more points wins (max 8 points)</li>
+              <li>First team to reach 5 points wins immediately</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Strategy Tips</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+              <li>Pay attention to who asks for what &mdash; it reveals information</li>
+              <li>Failed asks also give valuable clues to everyone</li>
+              <li>Communicate with teammates through your asking patterns</li>
+              <li>Claim early if you&apos;re confident, before opponents can interfere</li>
+              <li>A wrong claim is costly &mdash; make sure you&apos;re certain!</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Profile Edit Dialog ─────────────────────────────
 function ProfileEditDialog({ currentName, currentAvatar, soundEnabled, onClose, onSave, onToggleSound }: {
   currentName: string; currentAvatar: string; soundEnabled: boolean;
@@ -630,6 +731,7 @@ export default function GamePage() {
   const [error, setError] = useState('');
   const [showAsk, setShowAsk] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [actionAlert, setActionAlert] = useState<ActionAlertData | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsName, setNeedsName] = useState(false);
@@ -880,15 +982,24 @@ export default function GamePage() {
           <h1 className="text-amber-400 font-bold text-base sm:text-lg tracking-tight">Literature</h1>
           <span className="text-slate-600 text-[10px] sm:text-xs font-mono bg-black/20 px-1.5 sm:px-2 py-0.5 rounded-md border border-white/5">#{game.code}</span>
         </div>
-        <button
-          onClick={() => setShowProfileEdit(true)}
-          className="profile-btn flex-shrink-0"
-          title="Edit Profile"
-        >
-          <span className="avatar-circle sm">
-            {myAvatar || myName.charAt(0).toUpperCase() || '?'}
-          </span>
-        </button>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <button
+            onClick={() => setShowRules(true)}
+            className="rules-btn"
+            title="Game Rules"
+          >
+            <span>?</span>
+          </button>
+          <button
+            onClick={() => setShowProfileEdit(true)}
+            className="profile-btn"
+            title="Edit Profile"
+          >
+            <span className="avatar-circle sm">
+              {myAvatar || myName.charAt(0).toUpperCase() || '?'}
+            </span>
+          </button>
+        </div>
       </header>
 
       {/* Game Finished Banner */}
@@ -1017,6 +1128,7 @@ export default function GamePage() {
       </div>
 
       {/* Dialogs */}
+      {showRules && <RulesSidebar onClose={() => setShowRules(false)} />}
       {showAsk && <AskDialog game={game} onClose={() => setShowAsk(false)} onAsk={handleAsk} />}
       {showProfileEdit && (
         <ProfileEditDialog
