@@ -3,7 +3,11 @@
 @tailwind utilities;
 
 body {
-  background: #0f4c2e;
+  background: #0a3a22;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(16, 80, 50, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6, 60, 35, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(20, 90, 55, 0.4) 0%, transparent 50%);
   min-height: 100vh;
 }
 
@@ -11,6 +15,50 @@ body {
   .card-shadow {
     box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.3);
   }
+}
+
+/* Floating suit symbols background */
+.floating-suits {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-suit {
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0;
+  user-select: none;
+  filter: blur(0.5px);
+}
+
+/* Glass card panel */
+.glass-panel {
+  background: rgba(6, 78, 46, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Title shimmer */
+.title-shimmer {
+  background: linear-gradient(
+    120deg,
+    #f59e0b 0%,
+    #fbbf24 25%,
+    #fde68a 50%,
+    #fbbf24 75%,
+    #f59e0b 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Poker table */
@@ -92,4 +140,98 @@ body {
 
 .active-turn-glow {
   animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Playing card styling */
+.playing-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+  border-radius: 0.5rem;
+  border: 2px solid #d1d5db;
+  box-shadow:
+    2px 3px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.playing-card:hover {
+  border-color: #f59e0b;
+  transform: translateY(-4px);
+  box-shadow:
+    2px 6px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.playing-card.selected {
+  border-color: #f59e0b;
+  ring: 2px;
+  transform: translateY(-8px);
+  box-shadow:
+    2px 8px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Button glow effect */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+  background-size: 300% 300%;
+  animation: btn-shine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes btn-shine {
+  0%, 100% { background-position: 100% 50%; }
+  50% { background-position: 0% 50%; }
+}
+
+/* Lobby player slot */
+.lobby-slot {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lobby-slot:hover {
+  transform: translateX(4px);
+}
+
+/* Dialog backdrop */
+.dialog-backdrop {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Score badge */
+.score-badge {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 9999px;
+  padding: 2px 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth scrollbar for game log */
+.game-log::-webkit-scrollbar {
+  width: 4px;
+}
+
+.game-log::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.game-log::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.2);
+  border-radius: 4px;
+}
+
+.game-log::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.4);
 }
