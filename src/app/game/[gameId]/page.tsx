@@ -26,10 +26,47 @@ function setSoundEnabled(enabled: boolean) {
   }
 }
 
+// Shared AudioContext — created and resumed on first user interaction
+let _audioCtx: AudioContext | null = null;
+let _audioUnlocked = false;
+let _fahhAudio: HTMLAudioElement | null = null;
+
+function getAudioContext(): AudioContext | null {
+  try {
+    if (!_audioCtx) _audioCtx = new AudioContext();
+    return _audioCtx;
+  } catch { return null; }
+}
+
+// Call this once on any user click/touch to unlock audio playback
+function unlockAudio() {
+  if (_audioUnlocked) return;
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') ctx.resume();
+  // Preload and prime the fail sound
+  if (!_fahhAudio) {
+    _fahhAudio = new Audio('/sounds/fahhh.mp3');
+    _fahhAudio.volume = 0.5;
+    _fahhAudio.load();
+  }
+  _audioUnlocked = true;
+}
+
+if (typeof window !== 'undefined') {
+  const events = ['click', 'touchstart', 'keydown'] as const;
+  const handler = () => {
+    unlockAudio();
+    events.forEach(e => window.removeEventListener(e, handler));
+  };
+  events.forEach(e => window.addEventListener(e, handler, { once: false }));
+}
+
 function playTone(frequency: number, duration: number, type: OscillatorType = 'sine') {
   if (!getSoundEnabled()) return;
   try {
-    const ctx = new AudioContext();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
@@ -51,9 +88,14 @@ function playCardTransferSound() {
 function playCardFailSound() {
   if (!getSoundEnabled()) return;
   try {
-    const audio = new Audio('/sounds/fahhh.mp3');
-    audio.volume = 0.5;
-    audio.play();
+    if (_fahhAudio) {
+      _fahhAudio.currentTime = 0;
+      _fahhAudio.play().catch(() => {});
+    } else {
+      const audio = new Audio('/sounds/fahhh.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    }
   } catch { /* audio not available */ }
 }
 
