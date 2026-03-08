@@ -16,7 +16,8 @@ const AVATARS = [
 // ─── Sound Helpers ──────────────────────────────────
 function getSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;
-  return localStorage.getItem('literature_sound') === 'true';
+  const val = localStorage.getItem('literature_sound');
+  return val === null ? true : val === 'true';
 }
 
 function setSoundEnabled(enabled: boolean) {
