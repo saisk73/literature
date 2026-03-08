@@ -63,11 +63,12 @@ export async function GET(
     .find({ game_id: game._id })
     .toArray();
 
+  const showLog = game.show_log !== false;
   const logs = await db
     .collection('game_log')
     .find({ game_id: game._id })
     .sort({ _id: -1 })
-    .limit(50)
+    .limit(showLog ? 50 : 2)
     .toArray();
 
   // Compute individual scores from claims
@@ -90,7 +91,7 @@ export async function GET(
     createdBy: game.created_by,
     scores,
     winner: game.winner,
-    showLog: game.show_log !== false,
+    showLog,
     updatedAt: game.updated_at,
     isPlayer,
     myPlayerId: visitorId,

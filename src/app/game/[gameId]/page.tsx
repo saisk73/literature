@@ -922,7 +922,7 @@ export default function GamePage() {
               {game.showLog ? 'Game Log' : 'Recent Activity'}
             </div>
             <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
-              {(game.showLog ? game.logs : game.logs.slice(-2)).map((log, i) => (
+              {game.logs.map((log, i) => (
                 <div key={i} className="text-slate-500 py-1 border-b border-white/5">
                   {log.details?.message || log.action}
                 </div>
