@@ -272,7 +272,7 @@ export default function HomePage() {
                 <h3 className="text-amber-300/80 font-semibold mb-2 text-sm">How to Play</h3>
                 <ul className="text-emerald-400/60 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
                   <li>6 players, each playing individually</li>
-                  <li>48 cards (no 8s), 8 half-suits of 6 cards each</li>
+                  <li>48 cards (no 7s), 8 half-suits of 6 cards each</li>
                   <li>Ask any other player for specific cards you need</li>
                   <li>Claim half-suits by declaring who holds each card</li>
                   <li>Player with the most claimed sets wins!</li>

@@ -46,8 +46,8 @@ interface GameState {
 // ─── Card Helpers ───────────────────────────────────────
 const SUIT_SYMBOLS: Record<string, string> = { H: '\u2665', D: '\u2666', C: '\u2663', S: '\u2660' };
 const SUIT_NAMES: Record<string, string> = { H: 'Hearts', D: 'Diamonds', C: 'Clubs', S: 'Spades' };
-const LOW_RANKS = ['2', '3', '4', '5', '6', '7'];
-const HIGH_RANKS = ['9', '10', 'J', 'Q', 'K', 'A'];
+const LOW_RANKS = ['A', '2', '3', '4', '5', '6'];
+const HIGH_RANKS = ['8', '9', '10', 'J', 'Q', 'K'];
 
 function cardSuit(card: string) { return card.slice(-1); }
 function cardRank(card: string) { return card.slice(0, -1); }
@@ -80,7 +80,7 @@ function allHalfSuits(): string[] {
 
 function sortCards(cards: string[]): string[] {
   const so: Record<string, number> = { H: 0, D: 1, C: 2, S: 3 };
-  const ro: Record<string, number> = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+  const ro: Record<string, number> = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
   return [...cards].sort((a, b) => {
     const sa = cardSuit(a), sb = cardSuit(b);
     if (so[sa] !== so[sb]) return so[sa] - so[sb];
