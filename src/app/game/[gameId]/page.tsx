@@ -514,6 +514,8 @@ export default function GamePage() {
   const cardsRef = useRef<HTMLDivElement>(null);
   const actionBtnsRef = useRef<HTMLDivElement>(null);
   const prevCardCount = useRef(0);
+  const prevLogCount = useRef(0);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchGame = useCallback(async () => {
     try {
@@ -525,6 +527,19 @@ export default function GamePage() {
       }
       const data: GameState = await res.json();
       if (data.updatedAt !== prevUpdatedAt.current) {
+        // Detect new log entries and show alert for ask/claim actions
+        if (prevLogCount.current > 0 && data.logs.length > prevLogCount.current) {
+          const newLogs = data.logs.slice(prevLogCount.current);
+          const alertLog = newLogs.find(l =>
+            l.action === 'ask_success' || l.action === 'ask_fail' || l.action === 'claim'
+          );
+          if (alertLog?.details?.message) {
+            setActionMsg(alertLog.details.message as string);
+            if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+            dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
+          }
+        }
+        prevLogCount.current = data.logs.length;
         setGame(data);
         prevUpdatedAt.current = data.updatedAt;
       }
@@ -634,7 +649,8 @@ export default function GamePage() {
     const data = await res.json();
     if (res.ok) {
       setActionMsg(data.gotCard ? 'Got the card!' : 'They don\'t have it. Turn passed.');
-      setTimeout(() => setActionMsg(''), 3000);
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
       prevUpdatedAt.current = '';
       fetchGame();
     } else {
@@ -656,7 +672,8 @@ export default function GamePage() {
         forfeited: 'Wrong distribution. Set forfeited!',
       };
       setActionMsg(msgs[data.result] || 'Claimed.');
-      setTimeout(() => setActionMsg(''), 4000);
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      dismissTimerRef.current = setTimeout(() => setActionMsg(''), 10000);
       prevUpdatedAt.current = '';
       fetchGame();
     } else {
@@ -761,8 +778,8 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* Action Message */}
-      <ActionMessage message={actionMsg} />
+      {/* Action Alert */}
+      <ActionAlert message={actionMsg} onDismiss={() => setActionMsg('')} />
 
       {/* Error */}
       {error && (
@@ -891,24 +908,44 @@ export default function GamePage() {
   );
 }
 
-// ─── Action Message ──────────────────────────────────
-function ActionMessage({ message }: { message: string }) {
+// ─── Action Alert ────────────────────────────────────
+function ActionAlert({ message, onDismiss }: { message: string; onDismiss: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (message && ref.current) {
-      gsap.fromTo(ref.current,
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.35, ease: 'power2.out' }
+    if (!message || !ref.current) return;
+    gsap.fromTo(ref.current,
+      { y: -30, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.5)' }
+    );
+    if (progressRef.current) {
+      gsap.fromTo(progressRef.current,
+        { scaleX: 1 },
+        { scaleX: 0, duration: 10, ease: 'none' }
       );
     }
-  }, [message]);
+    const timer = setTimeout(() => {
+      if (ref.current) {
+        gsap.to(ref.current, {
+          y: -20, opacity: 0, scale: 0.95, duration: 0.3, ease: 'power2.in',
+          onComplete: onDismiss,
+        });
+      } else {
+        onDismiss();
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [message, onDismiss]);
 
   if (!message) return null;
 
   return (
-    <div ref={ref} className="bg-amber-900/20 border-b border-amber-700/20 px-4 py-2.5 text-center text-amber-200 text-sm font-medium">
-      {message}
+    <div className="fixed top-2 sm:top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1rem)] sm:w-auto sm:max-w-md pointer-events-auto">
+      <div ref={ref} className="action-alert glass-panel rounded-xl px-4 sm:px-6 py-3 sm:py-4 text-center shadow-2xl border border-amber-500/20 relative overflow-hidden">
+        <div className="text-amber-200 text-sm sm:text-base font-semibold">{message}</div>
+        <div ref={progressRef} className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400/40 origin-left" />
+      </div>
     </div>
   );
 }
