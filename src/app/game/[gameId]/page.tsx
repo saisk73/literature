@@ -29,7 +29,7 @@ function setSoundEnabled(enabled: boolean) {
 // Shared AudioContext — created and resumed on first user interaction
 let _audioCtx: AudioContext | null = null;
 let _audioUnlocked = false;
-let _fahhAudio: HTMLAudioElement | null = null;
+const _audioBuffers: Record<string, AudioBuffer> = {};
 
 function getAudioContext(): AudioContext | null {
   try {
@@ -38,17 +38,46 @@ function getAudioContext(): AudioContext | null {
   } catch { return null; }
 }
 
+// Preload an mp3 into an AudioBuffer for playback via Web Audio API
+async function preloadSound(url: string) {
+  const ctx = getAudioContext();
+  if (!ctx || _audioBuffers[url]) return;
+  try {
+    const res = await fetch(url);
+    const arrayBuf = await res.arrayBuffer();
+    const audioBuf = await ctx.decodeAudioData(arrayBuf);
+    _audioBuffers[url] = audioBuf;
+  } catch { /* preload failed, will retry on play */ }
+}
+
+// Play a preloaded sound through the AudioContext (no user gesture needed after unlock)
+function playSound(url: string, volume = 0.5) {
+  if (!getSoundEnabled()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const buffer = _audioBuffers[url];
+  if (!buffer) {
+    // Fallback: try to preload and play
+    preloadSound(url).then(() => playSound(url, volume));
+    return;
+  }
+  const source = ctx.createBufferSource();
+  const gain = ctx.createGain();
+  source.buffer = buffer;
+  gain.gain.value = volume;
+  source.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
+}
+
 // Call this once on any user click/touch to unlock audio playback
 function unlockAudio() {
   if (_audioUnlocked) return;
   const ctx = getAudioContext();
   if (ctx && ctx.state === 'suspended') ctx.resume();
-  // Preload and prime the fail sound
-  if (!_fahhAudio) {
-    _fahhAudio = new Audio('/sounds/fahhh.mp3');
-    _fahhAudio.volume = 0.5;
-    _fahhAudio.load();
-  }
+  preloadSound('/sounds/fahhh.mp3');
+  preloadSound('/sounds/fbi-open-up.mp3');
   _audioUnlocked = true;
 }
 
@@ -86,23 +115,11 @@ function playCardTransferSound() {
 }
 
 function playCardFailSound() {
-  if (!getSoundEnabled()) return;
-  try {
-    if (_fahhAudio) {
-      _fahhAudio.currentTime = 0;
-      _fahhAudio.play().catch(() => {});
-    } else {
-      const audio = new Audio('/sounds/fahhh.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    }
-  } catch { /* audio not available */ }
+  playSound('/sounds/fahhh.mp3', 0.5);
 }
 
 function playClaimSound() {
-  playTone(523, 0.1, 'sine');
-  setTimeout(() => playTone(659, 0.1, 'sine'), 80);
-  setTimeout(() => playTone(784, 0.2, 'sine'), 160);
+  playSound('/sounds/fbi-open-up.mp3', 0.5);
 }
 
 function playForfeitSound() {
