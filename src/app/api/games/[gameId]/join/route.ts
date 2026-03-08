@@ -42,14 +42,10 @@ export async function POST(
     return NextResponse.json({ error: 'Game is full' }, { status: 400 });
   }
 
-  const seatPosition = playerCount;
-  const team = seatPosition % 2 === 0 ? 1 : 2;
-
   await db.collection('game_players').insertOne({
     game_id: game._id,
     player_id: visitorId,
-    team,
-    seat_position: seatPosition,
+    seat_position: playerCount,
   });
 
   await db.collection('games').updateOne(

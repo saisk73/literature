@@ -36,7 +36,6 @@ export async function GET(
       {
         $project: {
           player_id: 1,
-          team: 1,
           seat_position: 1,
           display_name: '$user.display_name',
         },
@@ -70,17 +69,15 @@ export async function GET(
     .limit(50)
     .toArray();
 
-  const team1Cards = players
-    .filter((p) => p.team === 1)
-    .reduce((sum, p) => sum + (cardCounts[p.player_id] || 0), 0);
-  const team2Cards = players
-    .filter((p) => p.team === 2)
-    .reduce((sum, p) => sum + (cardCounts[p.player_id] || 0), 0);
-
-  let endgameTeam: number | null = null;
-  if (game.status === 'playing') {
-    if (team1Cards === 0 && team2Cards > 0) endgameTeam = 2;
-    else if (team2Cards === 0 && team1Cards > 0) endgameTeam = 1;
+  // Compute individual scores from claims
+  const scores: Record<string, number> = {};
+  for (const p of players) {
+    scores[p.player_id] = 0;
+  }
+  for (const c of claims) {
+    if (c.claimed_by) {
+      scores[c.claimed_by] = (scores[c.claimed_by] || 0) + 1;
+    }
   }
 
   return NextResponse.json({
@@ -90,25 +87,22 @@ export async function GET(
     maxPlayers: game.max_players,
     currentTurnPlayerId: game.current_turn_player_id,
     createdBy: game.created_by,
-    team1Score: game.team1_score,
-    team2Score: game.team2_score,
+    scores,
     winner: game.winner,
     showLog: game.show_log !== false,
     updatedAt: game.updated_at,
     isPlayer,
     myPlayerId: visitorId,
     myCards,
-    endgameTeam,
     players: players.map((p) => ({
       id: p.player_id,
       name: p.display_name,
-      team: p.team,
       seatPosition: p.seat_position,
       cardCount: cardCounts[p.player_id] || 0,
     })),
     claims: claims.map((c) => ({
       half_suit: c.half_suit,
-      claimed_by_team: c.claimed_by_team,
+      claimed_by: c.claimed_by || null,
     })),
     logs: logs.map((l) => ({
       action: l.action,

@@ -35,8 +35,6 @@ export async function POST(request: NextRequest) {
     max_players: maxPlayers,
     current_turn_player_id: null,
     created_by: visitorId,
-    team1_score: 0,
-    team2_score: 0,
     winner: null,
     show_log: showLog,
     created_at: now,
@@ -46,7 +44,6 @@ export async function POST(request: NextRequest) {
   await db.collection('game_players').insertOne({
     game_id: gameId,
     player_id: visitorId,
-    team: 1,
     seat_position: 0,
   });
 

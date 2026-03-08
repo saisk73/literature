@@ -8,7 +8,6 @@ import gsap from 'gsap';
 interface Player {
   id: string;
   name: string;
-  team: number;
   seatPosition: number;
   cardCount: number;
 }
@@ -22,7 +21,7 @@ interface LogEntry {
 
 interface Claim {
   half_suit: string;
-  claimed_by_team: number | null;
+  claimed_by: string | null;
 }
 
 interface GameState {
@@ -32,15 +31,13 @@ interface GameState {
   maxPlayers: number;
   currentTurnPlayerId: string | null;
   createdBy: string;
-  team1Score: number;
-  team2Score: number;
-  winner: number | null;
+  scores: Record<string, number>;
+  winner: string | null;
   showLog: boolean;
   updatedAt: string;
   isPlayer: boolean;
   myPlayerId: string;
   myCards: string[];
-  endgameTeam: number | null;
   players: Player[];
   claims: Claim[];
   logs: LogEntry[];
@@ -99,11 +96,9 @@ function CardView({ card, onClick, selected, small }: {
   const r = cardRank(card);
   const s = cardSuit(card);
   const red = isRed(card);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
-      ref={cardRef}
       onClick={onClick}
       className={`${small ? 'w-10 h-14 text-xs' : 'w-14 h-20 text-sm'} playing-card flex flex-col items-center justify-center
         ${red ? 'text-red-600' : 'text-gray-900'}
@@ -116,11 +111,9 @@ function CardView({ card, onClick, selected, small }: {
   );
 }
 
-function TablePlayerBadge({ player, isCurrentTurn, isMe, myTeam }: {
-  player: Player; isCurrentTurn: boolean; isMe: boolean; myTeam: number;
+function TablePlayerBadge({ player, isCurrentTurn, isMe, score }: {
+  player: Player; isCurrentTurn: boolean; isMe: boolean; score: number;
 }) {
-  const sameTeam = player.team === myTeam;
-  const teamColor = player.team === 1 ? 'blue' : 'red';
   const badgeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -135,30 +128,30 @@ function TablePlayerBadge({ player, isCurrentTurn, isMe, myTeam }: {
   return (
     <div ref={badgeRef} className={`flex flex-col items-center gap-0.5 transition-all ${isCurrentTurn ? 'scale-110' : ''}`}>
       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all
-        ${sameTeam ? 'bg-emerald-800/80 border-emerald-500' : 'bg-rose-900/80 border-rose-500'}
+        bg-emerald-800/80 border-emerald-500
         ${isCurrentTurn ? 'active-turn-glow !border-amber-400' : ''}
         ${isMe ? '!border-emerald-300 ring-2 ring-emerald-400/50' : ''}`}
       >
         {(isMe ? 'You' : player.name).charAt(0).toUpperCase()}
       </div>
       <div className={`text-[11px] font-semibold truncate max-w-[72px] text-center leading-tight
-        ${isCurrentTurn ? 'text-amber-300' : sameTeam ? 'text-emerald-300' : 'text-rose-300'}`}
+        ${isCurrentTurn ? 'text-amber-300' : 'text-emerald-300'}`}
       >
         {isMe ? 'You' : player.name}
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-gray-400">{player.cardCount}</span>
-        <span className={`text-[9px] px-1.5 py-px rounded-full
-          ${teamColor === 'blue' ? 'bg-blue-900/60 text-blue-300' : 'bg-red-900/60 text-red-300'}`}
-        >
-          T{player.team}
-        </span>
+        <span className="text-[10px] text-gray-400">{player.cardCount} cards</span>
+        {score > 0 && (
+          <span className="text-[9px] px-1.5 py-px rounded-full bg-amber-900/60 text-amber-300">
+            {score} pts
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-function GameTable({ game, myTeam }: { game: GameState; myTeam: number }) {
+function GameTable({ game }: { game: GameState }) {
   const meIdx = game.players.findIndex(p => p.id === game.myPlayerId);
   const count = game.players.length;
   const arranged: Player[] = [];
@@ -182,10 +175,6 @@ function GameTable({ game, myTeam }: { game: GameState; myTeam: number }) {
       <div className="table-felt">
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="text-emerald-600/50 text-xs font-mono tracking-wider">#{game.code}</div>
-          <div className="flex gap-3 mt-1.5 text-xs">
-            <span className="score-badge text-blue-300">T1: {game.team1Score}</span>
-            <span className="score-badge text-red-300">T2: {game.team2Score}</span>
-          </div>
         </div>
       </div>
       {arranged.map((player, i) => (
@@ -194,7 +183,7 @@ function GameTable({ game, myTeam }: { game: GameState; myTeam: number }) {
             player={player}
             isCurrentTurn={player.id === game.currentTurnPlayerId}
             isMe={player.id === game.myPlayerId}
-            myTeam={myTeam}
+            score={game.scores[player.id] || 0}
           />
         </div>
       ))}
@@ -213,8 +202,7 @@ function AskDialog({ game, onClose, onAsk }: {
   const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const me = game.players.find(p => p.id === game.myPlayerId)!;
-  const opponents = game.players.filter(p => p.team !== me.team && p.cardCount > 0);
+  const otherPlayers = game.players.filter(p => p.id !== game.myPlayerId && p.cardCount > 0);
 
   const myHalfSuits = new Set(game.myCards.map(getHalfSuit));
   const validCards = sortCards(
@@ -250,9 +238,9 @@ function AskDialog({ game, onClose, onAsk }: {
         <h3 className="text-xl font-bold text-amber-300 mb-4">Ask for a Card</h3>
 
         <div className="mb-4">
-          <label className="block text-sm text-emerald-300/80 mb-2 font-medium">Ask which opponent?</label>
+          <label className="block text-sm text-emerald-300/80 mb-2 font-medium">Ask which player?</label>
           <div className="flex gap-2 flex-wrap">
-            {opponents.map(p => (
+            {otherPlayers.map(p => (
               <button
                 key={p.id}
                 onClick={() => setTargetId(p.id)}
@@ -312,8 +300,6 @@ function ClaimDialog({ game, onClose, onClaim }: {
   const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const me = game.players.find(p => p.id === game.myPlayerId)!;
-  const teammates = game.players.filter(p => p.team === me.team);
   const claimedHs = new Set(game.claims.map(c => c.half_suit));
   const unclaimedHs = allHalfSuits().filter(hs => !claimedHs.has(hs));
 
@@ -377,7 +363,7 @@ function ClaimDialog({ game, onClose, onClaim }: {
         {selectedHs && (
           <div className="mb-6">
             <label className="block text-sm text-emerald-300/80 mb-2 font-medium">
-              Assign each card to a teammate
+              Assign each card to a player
             </label>
             <div className="space-y-2">
               {hsCards.map(card => (
@@ -389,7 +375,7 @@ function ClaimDialog({ game, onClose, onClaim }: {
                     className="flex-1 px-3 py-2 bg-black/30 border border-emerald-600/40 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/60 transition-all"
                   >
                     <option value="">-- Select player --</option>
-                    {teammates.map(p => (
+                    {game.players.map(p => (
                       <option key={p.id} value={p.id}>
                         {p.id === game.myPlayerId ? `${p.name} (You)` : p.name}
                       </option>
@@ -576,8 +562,7 @@ export default function GamePage() {
     const data = await res.json();
     if (res.ok) {
       const msgs: Record<string, string> = {
-        correct: 'Correct! Your team wins the set!',
-        opponent_wins: 'Wrong! An opponent had a card. They win the set.',
+        correct: 'Correct! You win the set!',
         forfeited: 'Wrong distribution. Set forfeited!',
       };
       setActionMsg(msgs[data.result] || 'Claimed.');
@@ -621,14 +606,17 @@ export default function GamePage() {
   }
 
   // ─── Playing / Finished ──────────────────────────
-  const me = game.players.find(p => p.id === game.myPlayerId);
-  const myTeam = me?.team || 0;
   const isMyTurn = game.currentTurnPlayerId === game.myPlayerId;
   const sorted = sortCards(game.myCards);
-  const canAsk = isMyTurn && game.myCards.length > 0 && game.status === 'playing' && !game.endgameTeam;
+  const canAsk = isMyTurn && game.myCards.length > 0 && game.status === 'playing';
   const canClaim = isMyTurn && game.status === 'playing';
 
   const turnPlayer = game.players.find(p => p.id === game.currentTurnPlayerId);
+
+  // Build scoreboard sorted by score desc
+  const scoreboard = game.players
+    .map(p => ({ ...p, score: game.scores[p.id] || 0 }))
+    .sort((a, b) => b.score - a.score);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -638,9 +626,12 @@ export default function GamePage() {
           <h1 className="text-amber-300 font-bold text-lg tracking-tight">Literature</h1>
           <span className="text-emerald-500/60 text-xs font-mono bg-black/20 px-2 py-0.5 rounded-md">#{game.code}</span>
         </div>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="score-badge text-blue-300">Team 1: {game.team1Score}</span>
-          <span className="score-badge text-red-300">Team 2: {game.team2Score}</span>
+        <div className="flex items-center gap-2 text-xs">
+          {scoreboard.map(p => (
+            <span key={p.id} className={`score-badge ${p.id === game.myPlayerId ? 'text-amber-300' : 'text-emerald-300/70'}`}>
+              {p.id === game.myPlayerId ? 'You' : p.name}: {p.score}
+            </span>
+          ))}
         </div>
       </header>
 
@@ -651,9 +642,6 @@ export default function GamePage() {
       {game.status === 'playing' && (
         <div className={`px-4 py-2.5 text-center text-sm font-medium transition-all ${isMyTurn ? 'bg-amber-600/20 text-amber-300 border-b border-amber-600/20' : 'bg-black/20 text-emerald-400/80 border-b border-white/5'}`}>
           {isMyTurn ? "It's your turn!" : `Waiting for ${turnPlayer?.name || '...'}...`}
-          {game.endgameTeam && (
-            <span className="ml-2 text-rose-300/80 text-xs">(Claim-only mode - Team {game.endgameTeam === myTeam ? 'opponent' : 'your'} is out of cards)</span>
-          )}
         </div>
       )}
 
@@ -670,7 +658,7 @@ export default function GamePage() {
       <div className="flex-1 flex flex-col lg:flex-row gap-2 p-2 lg:p-4 overflow-hidden">
         {/* Main game area */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
-          <GameTable game={game} myTeam={myTeam} />
+          <GameTable game={game} />
 
           {/* My cards */}
           <div className="bg-black/20 rounded-xl p-3 flex-shrink-0 border border-white/5">
@@ -712,16 +700,21 @@ export default function GamePage() {
             <div className="text-xs text-amber-400/80 mb-2 font-semibold tracking-wide">Claimed Sets ({game.claims.length}/8)</div>
             <div className="space-y-1">
               {game.claims.length === 0 && <div className="text-emerald-700/60 text-sm">No sets claimed yet</div>}
-              {game.claims.map(c => (
-                <div key={c.half_suit} className="flex items-center justify-between text-sm px-2.5 py-1.5 rounded-lg bg-black/20 border border-white/5">
-                  <span className={c.half_suit.split('_')[1] === 'H' || c.half_suit.split('_')[1] === 'D' ? 'text-red-300' : 'text-gray-300'}>
-                    {halfSuitName(c.half_suit)}
-                  </span>
-                  <span className={c.claimed_by_team === 1 ? 'text-blue-300' : c.claimed_by_team === 2 ? 'text-red-300' : 'text-gray-500'}>
-                    {c.claimed_by_team ? `Team ${c.claimed_by_team}` : 'Forfeited'}
-                  </span>
-                </div>
-              ))}
+              {game.claims.map(c => {
+                const claimerName = c.claimed_by
+                  ? (game.players.find(p => p.id === c.claimed_by)?.name || 'Unknown')
+                  : null;
+                return (
+                  <div key={c.half_suit} className="flex items-center justify-between text-sm px-2.5 py-1.5 rounded-lg bg-black/20 border border-white/5">
+                    <span className={c.half_suit.split('_')[1] === 'H' || c.half_suit.split('_')[1] === 'D' ? 'text-red-300' : 'text-gray-300'}>
+                      {halfSuitName(c.half_suit)}
+                    </span>
+                    <span className={claimerName ? 'text-amber-300' : 'text-gray-500'}>
+                      {claimerName || 'Forfeited'}
+                    </span>
+                  </div>
+                );
+              })}
               {allHalfSuits()
                 .filter(hs => !game.claims.find(c => c.half_suit === hs))
                 .map(hs => (
@@ -785,6 +778,14 @@ function ActionMessage({ message }: { message: string }) {
 function GameFinishedBanner({ game, router }: { game: GameState; router: ReturnType<typeof useRouter> }) {
   const ref = useRef<HTMLDivElement>(null);
 
+  const winnerName = game.winner && game.winner !== 'tie'
+    ? (game.players.find(p => p.id === game.winner)?.name || 'Unknown')
+    : null;
+
+  const scoreboard = game.players
+    .map(p => ({ ...p, score: game.scores[p.id] || 0 }))
+    .sort((a, b) => b.score - a.score);
+
   useEffect(() => {
     if (ref.current) {
       const tl = gsap.timeline();
@@ -806,12 +807,14 @@ function GameFinishedBanner({ game, router }: { game: GameState; router: ReturnT
   return (
     <div ref={ref} className="bg-gradient-to-r from-amber-600/20 via-amber-600/30 to-amber-600/20 border-b border-amber-600/30 px-4 py-4 text-center origin-top">
       <div className="winner-text text-2xl font-bold text-amber-300">
-        {game.winner === 0
+        {game.winner === 'tie'
           ? "It's a Tie!"
-          : `Team ${game.winner} Wins!`}
+          : `${winnerName} Wins!`}
       </div>
-      <div className="text-emerald-300/80 text-sm mt-1">
-        Final Score: Team 1 ({game.team1Score}) - Team 2 ({game.team2Score})
+      <div className="text-emerald-300/80 text-sm mt-1 flex justify-center gap-3 flex-wrap">
+        {scoreboard.map(p => (
+          <span key={p.id}>{p.id === game.myPlayerId ? 'You' : p.name}: {p.score}</span>
+        ))}
       </div>
       <button
         onClick={() => router.push('/')}
@@ -878,9 +881,6 @@ function LobbyView({ game, onJoin, onStart, error }: {
 }) {
   const isHost = game.createdBy === game.myPlayerId;
   const isInGame = game.isPlayer;
-  const team1 = game.players.filter(p => p.team === 1);
-  const team2 = game.players.filter(p => p.team === 2);
-  const perTeam = game.maxPlayers / 2;
   const panelRef = useRef<HTMLDivElement>(null);
   const slotsRef = useRef<HTMLDivElement>(null);
 
@@ -922,39 +922,21 @@ function LobbyView({ game, onJoin, onStart, error }: {
           </div>
         )}
 
-        <div ref={slotsRef} className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <h3 className="text-blue-300 font-semibold text-sm mb-2">Team 1</h3>
-            <div className="space-y-1.5">
-              {team1.map(p => (
-                <div key={p.id} className="lobby-slot bg-blue-900/25 px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 border border-blue-500/10">
-                  <span className="text-white">{p.name}</span>
-                  {p.id === game.createdBy && <span className="text-amber-400 text-xs">(Host)</span>}
-                  {p.id === game.myPlayerId && <span className="text-emerald-400 text-xs">(You)</span>}
-                </div>
-              ))}
-              {Array.from({ length: perTeam - team1.length }).map((_, i) => (
-                <div key={i} className="lobby-slot border border-dashed border-blue-800/30 px-3 py-2.5 rounded-xl text-sm text-blue-800/50 animate-pulse">
-                  Waiting...
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h3 className="text-red-300 font-semibold text-sm mb-2">Team 2</h3>
-            <div className="space-y-1.5">
-              {team2.map(p => (
-                <div key={p.id} className="lobby-slot bg-red-900/25 px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 border border-red-500/10">
-                  <span className="text-white">{p.name}</span>
-                  {p.id === game.myPlayerId && <span className="text-emerald-400 text-xs">(You)</span>}
-                </div>
-              ))}
-              {Array.from({ length: perTeam - team2.length }).map((_, i) => (
-                <div key={i} className="lobby-slot border border-dashed border-red-800/30 px-3 py-2.5 rounded-xl text-sm text-red-800/50 animate-pulse">
-                  Waiting...
-                </div>
-              ))}
-            </div>
+        <div ref={slotsRef} className="mb-6">
+          <h3 className="text-emerald-300 font-semibold text-sm mb-2">Players</h3>
+          <div className="space-y-1.5">
+            {game.players.map(p => (
+              <div key={p.id} className="lobby-slot bg-emerald-900/30 px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 border border-emerald-500/10">
+                <span className="text-white">{p.name}</span>
+                {p.id === game.createdBy && <span className="text-amber-400 text-xs">(Host)</span>}
+                {p.id === game.myPlayerId && <span className="text-emerald-400 text-xs">(You)</span>}
+              </div>
+            ))}
+            {Array.from({ length: game.maxPlayers - game.players.length }).map((_, i) => (
+              <div key={i} className="lobby-slot border border-dashed border-emerald-800/30 px-3 py-2.5 rounded-xl text-sm text-emerald-800/50 animate-pulse">
+                Waiting...
+              </div>
+            ))}
           </div>
         </div>
 

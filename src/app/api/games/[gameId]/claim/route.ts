@@ -57,15 +57,12 @@ export async function POST(
     .find({ game_id: game._id })
     .toArray();
 
-  const claimer = players.find((p) => p.player_id === visitorId)!;
-  const claimerTeam = claimer.team;
-  const teamPlayerIds = new Set(
-    players.filter((p) => p.team === claimerTeam).map((p) => p.player_id)
-  );
+  const playerIds = new Set(players.map((p) => p.player_id));
 
+  // Validate all assigned players are in the game
   for (const playerId of Object.values(assignments) as string[]) {
-    if (!teamPlayerIds.has(playerId)) {
-      return NextResponse.json({ error: 'Can only assign cards to your team members' }, { status: 400 });
+    if (!playerIds.has(playerId)) {
+      return NextResponse.json({ error: 'Can only assign cards to players in the game' }, { status: 400 });
     }
   }
 
@@ -84,44 +81,31 @@ export async function POST(
   const claimerName = claimerUser?.display_name || '';
   const hsName = getHalfSuitDisplayName(halfSuit);
 
-  // Check if any card is held by opponent
-  let opponentHasCard = false;
+  // Check if all assignments are correct
+  let allCorrect = true;
   for (const card of hsCards) {
-    const actualHolder = actualMap[card];
-    if (actualHolder && !teamPlayerIds.has(actualHolder)) {
-      opponentHasCard = true;
+    if (actualMap[card] !== assignments[card]) {
+      allCorrect = false;
       break;
     }
   }
 
-  let result: 'correct' | 'opponent_wins' | 'forfeited';
-  let winningTeam: number | null;
+  let result: 'correct' | 'forfeited';
+  let claimedBy: string | null;
 
-  if (opponentHasCard) {
-    result = 'opponent_wins';
-    winningTeam = claimerTeam === 1 ? 2 : 1;
+  if (allCorrect) {
+    result = 'correct';
+    claimedBy = visitorId;
   } else {
-    let distributionCorrect = true;
-    for (const card of hsCards) {
-      if (actualMap[card] !== assignments[card]) {
-        distributionCorrect = false;
-        break;
-      }
-    }
-    if (distributionCorrect) {
-      result = 'correct';
-      winningTeam = claimerTeam;
-    } else {
-      result = 'forfeited';
-      winningTeam = null;
-    }
+    result = 'forfeited';
+    claimedBy = null;
   }
 
   // Record the claim
   await db.collection('game_claims').insertOne({
     game_id: game._id,
     half_suit: halfSuit,
-    claimed_by_team: winningTeam,
+    claimed_by: claimedBy,
     claimed_at: new Date(),
   });
 
@@ -131,13 +115,6 @@ export async function POST(
     card: { $in: hsCards },
   });
 
-  // Update scores
-  if (winningTeam === 1) {
-    await db.collection('games').updateOne({ _id: game._id }, { $inc: { team1_score: 1 } });
-  } else if (winningTeam === 2) {
-    await db.collection('games').updateOne({ _id: game._id }, { $inc: { team2_score: 1 } });
-  }
-
   // Check if all 8 half-suits claimed
   const claimCount = await db.collection('game_claims').countDocuments({ game_id: game._id });
 
@@ -146,9 +123,7 @@ export async function POST(
 
   let logMessage = '';
   if (result === 'correct') {
-    logMessage = `${claimerName} correctly claimed ${hsName}! Team ${winningTeam} wins the set.`;
-  } else if (result === 'opponent_wins') {
-    logMessage = `${claimerName} incorrectly claimed ${hsName}. An opponent holds a card! Team ${winningTeam} wins the set.`;
+    logMessage = `${claimerName} correctly claimed ${hsName}!`;
   } else {
     logMessage = `${claimerName} claimed ${hsName} but got the distribution wrong. Set is forfeited!`;
   }
@@ -157,16 +132,30 @@ export async function POST(
     game_id: game._id,
     action: 'claim',
     player_id: visitorId,
-    details: { halfSuit, result, winningTeam, claimerName, message: logMessage },
+    details: { halfSuit, result, claimedBy, claimerName, message: logMessage },
     created_at: new Date(),
   });
 
   if (claimCount >= 8) {
-    // Game over
-    const updatedGame = await db.collection('games').findOne({ _id: game._id });
-    const t1 = updatedGame?.team1_score || 0;
-    const t2 = updatedGame?.team2_score || 0;
-    const winner = t1 > t2 ? 1 : t2 > t1 ? 2 : 0;
+    // Game over - find winner by most claims
+    const allClaims = await db.collection('game_claims').find({ game_id: game._id }).toArray();
+    const scores: Record<string, number> = {};
+    for (const p of players) {
+      scores[p.player_id] = 0;
+    }
+    for (const c of allClaims) {
+      if (c.claimed_by) {
+        scores[c.claimed_by] = (scores[c.claimed_by] || 0) + 1;
+      }
+    }
+
+    const maxScore = Math.max(...Object.values(scores));
+    const topPlayers = Object.entries(scores).filter(([, s]) => s === maxScore);
+    const winner = topPlayers.length === 1 ? topPlayers[0][0] : 'tie';
+
+    const winnerName = winner !== 'tie'
+      ? (await db.collection('users').findOne({ _id: winner as any }))?.display_name || ''
+      : '';
 
     await db.collection('games').updateOne(
       { _id: game._id },
@@ -178,9 +167,8 @@ export async function POST(
       action: 'game_over',
       player_id: null,
       details: {
-        message: winner === 0 ? "Game over! It's a tie!" : `Game over! Team ${winner} wins!`,
-        team1Score: t1,
-        team2Score: t2,
+        message: winner === 'tie' ? "Game over! It's a tie!" : `Game over! ${winnerName} wins!`,
+        scores,
       },
       created_at: new Date(),
     });
@@ -196,7 +184,7 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ ok: true, result, winningTeam });
+  return NextResponse.json({ ok: true, result });
 }
 
 async function findNextPlayerWithCards(

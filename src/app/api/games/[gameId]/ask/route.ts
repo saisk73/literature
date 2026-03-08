@@ -33,22 +33,10 @@ export async function POST(
     .find({ game_id: game._id })
     .toArray();
 
-  const asker = players.find((p) => p.player_id === visitorId)!;
   const target = players.find((p) => p.player_id === targetPlayerId);
   if (!target) return NextResponse.json({ error: 'Target player not found' }, { status: 400 });
-  if (target.team === asker.team) {
-    return NextResponse.json({ error: 'Cannot ask a teammate' }, { status: 400 });
-  }
-
-  // Check endgame: if opponent team has 0 cards, no asking allowed
-  const opponentTeam = asker.team === 1 ? 2 : 1;
-  const opponentPlayerIds = players.filter((p) => p.team === opponentTeam).map((p) => p.player_id);
-  const opponentCardCount = await db.collection('game_cards').countDocuments({
-    game_id: game._id,
-    holder_id: { $in: opponentPlayerIds },
-  });
-  if (opponentCardCount === 0) {
-    return NextResponse.json({ error: 'Opponents have no cards. You must claim.' }, { status: 400 });
+  if (targetPlayerId === visitorId) {
+    return NextResponse.json({ error: 'Cannot ask yourself' }, { status: 400 });
   }
 
   // Check target has at least one card

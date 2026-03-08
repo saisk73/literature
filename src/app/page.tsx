@@ -53,7 +53,6 @@ export default function HomePage() {
   const [name, setName] = useState('');
   const [savedName, setSavedName] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');
-  const [playerCount, setPlayerCount] = useState<4 | 6 | 8 | 10>(6);
   const [showLog, setShowLog] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -131,7 +130,7 @@ export default function HomePage() {
     const res = await fetch('/api/games', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ maxPlayers: playerCount, showLog }),
+      body: JSON.stringify({ maxPlayers: 6, showLog }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -218,28 +217,6 @@ export default function HomePage() {
                 </button>
               </div>
 
-              <div className="space-y-2 mb-5">
-                <label className="block text-sm text-emerald-300/80 font-medium">Number of players</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {([4, 6, 8, 10] as const).map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setPlayerCount(n)}
-                      className={`py-2.5 rounded-xl font-semibold transition-all text-sm ${
-                        playerCount === n
-                          ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/25 scale-105'
-                          : 'bg-black/25 text-emerald-300 hover:bg-black/40 border border-emerald-700/30'
-                      }`}
-                    >
-                      {n}P
-                    </button>
-                  ))}
-                </div>
-                <div className="text-xs text-emerald-500/70 text-center">
-                  {`2 teams of ${playerCount / 2} \u00b7 ${Math.floor(48 / playerCount)} cards each`}
-                </div>
-              </div>
-
               <div className="flex items-center justify-between px-1 mb-5">
                 <label className="text-sm text-emerald-300/80 font-medium">Game Log</label>
                 <button
@@ -294,11 +271,11 @@ export default function HomePage() {
               <div className="mt-8 pt-6 border-t border-emerald-800/40">
                 <h3 className="text-amber-300/80 font-semibold mb-2 text-sm">How to Play</h3>
                 <ul className="text-emerald-400/60 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
-                  <li>4-10 players split into 2 equal teams</li>
+                  <li>6 players, each playing individually</li>
                   <li>48 cards (no 8s), 8 half-suits of 6 cards each</li>
-                  <li>Ask opponents for specific cards you need</li>
+                  <li>Ask any other player for specific cards you need</li>
                   <li>Claim half-suits by declaring who holds each card</li>
-                  <li>Team with more claimed sets wins!</li>
+                  <li>Player with the most claimed sets wins!</li>
                 </ul>
               </div>
             </>
