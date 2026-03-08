@@ -33,17 +33,35 @@ export async function POST(
     .sort({ seat_position: 1 })
     .toArray();
 
-  if (players.length !== game.max_players) {
-    return NextResponse.json({ error: `Need exactly ${game.max_players} players to start` }, { status: 400 });
+  const seatCount = game.max_players; // 6, 8, or 12
+
+  if (players.length < seatCount) {
+    return NextResponse.json({ error: `Need at least ${seatCount} players to start` }, { status: 400 });
+  }
+
+  // First seatCount players are primary seat holders
+  const primaryPlayers = players.slice(0, seatCount);
+  const extraPlayers = players.slice(seatCount);
+
+  // Pair extra players with random primary players
+  if (extraPlayers.length > 0) {
+    const shuffledPrimaries = [...primaryPlayers].sort(() => Math.random() - 0.5);
+    for (let i = 0; i < extraPlayers.length; i++) {
+      const partner = shuffledPrimaries[i % shuffledPrimaries.length];
+      await db.collection('game_players').updateOne(
+        { game_id: game._id, player_id: extraPlayers[i].player_id },
+        { $set: { paired_with: partner.player_id } }
+      );
+    }
   }
 
   const deck = shuffleDeck(createDeck());
 
-  // Deal cards
+  // Deal cards only to primary seated players
   const cardDocs = deck.map((card, i) => ({
     game_id: game._id,
     card,
-    holder_id: players[i % players.length].player_id,
+    holder_id: primaryPlayers[i % seatCount].player_id,
   }));
 
   await db.collection('game_cards').insertMany(cardDocs);
@@ -53,7 +71,7 @@ export async function POST(
     {
       $set: {
         status: 'playing',
-        current_turn_player_id: players[0].player_id,
+        current_turn_player_id: primaryPlayers[0].player_id,
         updated_at: new Date(),
       },
     }
@@ -63,7 +81,12 @@ export async function POST(
     game_id: game._id,
     action: 'game_started',
     player_id: visitorId,
-    details: { message: 'Game started! Cards have been dealt.' },
+    details: {
+      message: 'Game started! Cards have been dealt.',
+      pairedPlayers: extraPlayers.length > 0
+        ? extraPlayers.map((ep: { player_id: string }) => ep.player_id)
+        : undefined,
+    },
     created_at: new Date(),
   });
 

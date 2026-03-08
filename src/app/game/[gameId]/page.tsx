@@ -88,6 +88,7 @@ interface Player {
   avatar: string;
   seatPosition: number;
   cardCount: number;
+  pairedWith?: string | null;
 }
 
 interface LogEntry {
@@ -260,19 +261,26 @@ function PlayerStrip({ game, playerEmoji }: { game: GameState; playerEmoji?: { p
 
   return (
     <div ref={stripRef} className="player-strip-grid panel-section">
-      {game.players.map(player => {
+      {game.players.filter(p => !p.pairedWith).map(player => {
         const isTurn = player.id === game.currentTurnPlayerId;
         const isMe = player.id === game.myPlayerId;
+        const pairedBuddies = game.players.filter(p => p.pairedWith === player.id);
+        const isMePaired = pairedBuddies.some(b => b.id === game.myPlayerId);
         return (
           <div
             key={player.id}
             data-player-id={player.id}
-            className={`player-chip ${isTurn ? 'is-turn' : ''} ${isMe ? 'is-me' : ''}`}
+            className={`player-chip ${isTurn ? 'is-turn' : ''} ${isMe || isMePaired ? 'is-me' : ''}`}
           >
             <PlayerAvatar player={player} size="sm" isTurn={isTurn} />
             <div className="flex flex-col min-w-0">
-              <span className={`text-xs sm:text-sm font-medium leading-tight truncate ${isTurn ? 'text-amber-300' : isMe ? 'text-indigo-300' : 'text-slate-300'}`}>
+              <span className={`text-xs sm:text-sm font-medium leading-tight truncate ${isTurn ? 'text-amber-300' : isMe || isMePaired ? 'text-indigo-300' : 'text-slate-300'}`}>
                 {isMe ? 'You' : player.name}
+                {pairedBuddies.length > 0 && (
+                  <span className="text-purple-400 text-[9px] ml-1">
+                    +{pairedBuddies.map(b => b.id === game.myPlayerId ? 'You' : b.name).join(', ')}
+                  </span>
+                )}
               </span>
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] sm:text-[10px] text-slate-500">{player.cardCount} cards</span>
@@ -300,7 +308,7 @@ function AskDialog({ game, onClose, onAsk }: {
   const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const otherPlayers = game.players.filter(p => p.id !== game.myPlayerId && p.cardCount > 0);
+  const otherPlayers = game.players.filter(p => p.id !== game.myPlayerId && !p.pairedWith && p.cardCount > 0);
 
   const myHalfSuits = new Set(game.myCards.map(getHalfSuit));
   const validCards = sortCards(
@@ -965,9 +973,13 @@ export default function GamePage() {
   }
 
   // ─── Playing / Finished ────────────────────────
-  const isMyTurn = game.currentTurnPlayerId === game.myPlayerId;
+  const myPlayer = game.players.find(p => p.id === game.myPlayerId);
+  const myPartnerId = myPlayer?.pairedWith || null;
+  const isMyTurn = game.currentTurnPlayerId === game.myPlayerId || (myPartnerId != null && game.currentTurnPlayerId === myPartnerId);
   const sorted = sortCards(game.myCards);
-  const canAsk = isMyTurn && game.myCards.length > 0 && game.status === 'playing';
+  // Only primary (non-paired) players can ask - paired players observe
+  const isPairedObserver = !!myPartnerId;
+  const canAsk = isMyTurn && !isPairedObserver && game.myCards.length > 0 && game.status === 'playing';
   // Claims are now automatic when a player collects all 6 cards
   const turnPlayer = game.players.find(p => p.id === game.currentTurnPlayerId);
 
@@ -1013,7 +1025,11 @@ export default function GamePage() {
       {/* Turn Indicator */}
       {game.status === 'playing' && (
         <div className={`px-4 py-2.5 text-center text-sm font-medium ${isMyTurn ? 'turn-banner text-amber-300' : 'bg-black/15 text-slate-500 border-b border-white/5'}`}>
-          {isMyTurn ? "Your turn - ask for a card" : `Waiting for ${turnPlayer?.name || '...'}...`}
+          {isMyTurn && !isPairedObserver
+            ? "Your turn - ask for a card"
+            : isMyTurn && isPairedObserver
+            ? `Your partner ${turnPlayer?.name || ''}'s turn`
+            : `Waiting for ${turnPlayer?.name || '...'}...`}
         </div>
       )}
 
@@ -1355,6 +1371,9 @@ function LobbyView({ game, onJoin, onStart, error }: {
   const isInGame = game.isPlayer;
   const panelRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const hasEnoughPlayers = game.players.length >= game.maxPlayers;
+  const extraPlayers = game.players.length > game.maxPlayers ? game.players.length - game.maxPlayers : 0;
+  const emptySlotsCount = Math.max(0, game.maxPlayers - game.players.length);
 
   useEffect(() => {
     if (panelRef.current) {
@@ -1379,7 +1398,7 @@ function LobbyView({ game, onJoin, onStart, error }: {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-xl w-full" style={{ opacity: 0 }}>
         <h1 className="text-2xl sm:text-3xl font-bold title-shimmer text-center mb-1">Game Lobby</h1>
-        <p className="text-center text-slate-600 text-xs mb-4 sm:mb-5 tracking-wide">{game.maxPlayers}-player game</p>
+        <p className="text-center text-slate-600 text-xs mb-4 sm:mb-5 tracking-wide">{game.maxPlayers}-seat game</p>
 
         {/* Game Code */}
         <div className="text-center mb-4 sm:mb-6">
@@ -1397,19 +1416,20 @@ function LobbyView({ game, onJoin, onStart, error }: {
 
         {/* Player Grid */}
         <div ref={gridRef} className="lobby-grid mb-6">
-          {game.players.map(p => (
-            <div key={p.id} className="lobby-card">
+          {game.players.map((p, idx) => (
+            <div key={p.id} className={`lobby-card ${idx >= game.maxPlayers ? 'ring-1 ring-purple-500/40' : ''}`}>
               <div className="avatar-circle lg mb-2">
                 {p.avatar || p.name.charAt(0).toUpperCase()}
               </div>
               <div className="text-sm font-medium text-white truncate max-w-full px-1">{p.name}</div>
-              <div className="flex gap-1 mt-1">
+              <div className="flex gap-1 mt-1 flex-wrap justify-center">
                 {p.id === game.createdBy && <span className="text-amber-400 text-[10px] bg-amber-900/30 px-1.5 py-0.5 rounded-full">Host</span>}
                 {p.id === game.myPlayerId && <span className="text-indigo-300 text-[10px] bg-indigo-900/30 px-1.5 py-0.5 rounded-full">You</span>}
+                {idx >= game.maxPlayers && <span className="text-purple-300 text-[10px] bg-purple-900/30 px-1.5 py-0.5 rounded-full">Paired</span>}
               </div>
             </div>
           ))}
-          {Array.from({ length: game.maxPlayers - game.players.length }).map((_, i) => (
+          {Array.from({ length: emptySlotsCount }).map((_, i) => (
             <div key={`empty-${i}`} className="lobby-card empty">
               <div className="avatar-circle lg mb-2 opacity-20">?</div>
               <div className="text-sm text-slate-700 animate-pulse">Waiting...</div>
@@ -1417,11 +1437,17 @@ function LobbyView({ game, onJoin, onStart, error }: {
           ))}
         </div>
 
-        <div className="text-center text-slate-600 text-sm mb-4">
-          {game.players.length}/{game.maxPlayers} players joined
+        <div className="text-center text-slate-600 text-sm mb-2">
+          {game.players.length} players joined ({game.maxPlayers} seats)
         </div>
+        {extraPlayers > 0 && (
+          <div className="text-center text-purple-400 text-xs mb-4">
+            {extraPlayers} extra player{extraPlayers > 1 ? 's' : ''} will be paired with random seated players
+          </div>
+        )}
+        {!extraPlayers && <div className="mb-4" />}
 
-        {!isInGame && game.players.length < game.maxPlayers && (
+        {!isInGame && (
           <button onClick={onJoin} className="btn-secondary w-full py-3 text-lg font-semibold mb-3">
             Join Game
           </button>
@@ -1430,10 +1456,10 @@ function LobbyView({ game, onJoin, onStart, error }: {
         {isHost && (
           <button
             onClick={onStart}
-            disabled={game.players.length !== game.maxPlayers}
+            disabled={!hasEnoughPlayers}
             className="btn-primary w-full py-3 text-lg"
           >
-            {game.players.length === game.maxPlayers ? 'Start Game' : `Waiting for ${game.maxPlayers - game.players.length} more...`}
+            {hasEnoughPlayers ? 'Start Game' : `Waiting for ${game.maxPlayers - game.players.length} more...`}
           </button>
         )}
 

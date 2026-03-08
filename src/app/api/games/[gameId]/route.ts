@@ -37,6 +37,7 @@ export async function GET(
         $project: {
           player_id: 1,
           seat_position: 1,
+          paired_with: 1,
           display_name: '$user.display_name',
           avatar: '$user.avatar',
         },
@@ -52,10 +53,16 @@ export async function GET(
     .find({ game_id: game._id })
     .toArray();
 
-  const myCards = allCards.filter((c) => c.holder_id === visitorId).map((c) => c.card);
+  // If current player is paired with someone, show partner's cards
+  const myPlayerRecord = players.find((p) => p.player_id === visitorId);
+  const myCardHolder = myPlayerRecord?.paired_with || visitorId;
+
+  const myCards = allCards.filter((c) => c.holder_id === myCardHolder).map((c) => c.card);
   const cardCounts: Record<string, number> = {};
   for (const p of players) {
-    cardCounts[p.player_id] = allCards.filter((c) => c.holder_id === p.player_id).length;
+    // For paired players, show same card count as their partner
+    const holderId = p.paired_with || p.player_id;
+    cardCounts[p.player_id] = allCards.filter((c) => c.holder_id === holderId).length;
   }
 
   const claims = await db
@@ -102,6 +109,7 @@ export async function GET(
       avatar: p.avatar || '',
       seatPosition: p.seat_position,
       cardCount: cardCounts[p.player_id] || 0,
+      pairedWith: p.paired_with || null,
     })),
     claims: claims.map((c) => ({
       half_suit: c.half_suit,
