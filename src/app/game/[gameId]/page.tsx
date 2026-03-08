@@ -16,7 +16,8 @@ const AVATARS = [
 // ─── Sound Helpers ──────────────────────────────────
 function getSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;
-  return localStorage.getItem('literature_sound') === 'true';
+  const val = localStorage.getItem('literature_sound');
+  return val === null ? true : val === 'true';
 }
 
 function setSoundEnabled(enabled: boolean) {
@@ -48,8 +49,12 @@ function playCardTransferSound() {
 }
 
 function playCardFailSound() {
-  playTone(330, 0.2, 'triangle');
-  setTimeout(() => playTone(262, 0.3, 'triangle'), 150);
+  if (!getSoundEnabled()) return;
+  try {
+    const audio = new Audio('/sounds/fahhh.mp3');
+    audio.volume = 0.5;
+    audio.play();
+  } catch { /* audio not available */ }
 }
 
 function playClaimSound() {
