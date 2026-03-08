@@ -322,6 +322,28 @@ body {
   border: 1px solid var(--border-subtle);
 }
 
+/* ─── Profile Button ───────────────────────────────── */
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 2px;
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+}
+
+.profile-btn:hover {
+  border-color: var(--border-accent);
+}
+
+.profile-btn:hover .avatar-circle {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+}
+
 /* ─── Dialog Backdrop ───────────────────────────────── */
 .dialog-backdrop {
   backdrop-filter: blur(8px);

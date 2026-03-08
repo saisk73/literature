@@ -178,6 +178,23 @@ export default function HomePage() {
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <FloatingSuits />
 
+      {/* Top navbar with profile */}
+      {savedName && !editingProfile && (
+        <nav className="fixed top-0 left-0 right-0 z-20 bg-black/30 backdrop-blur-sm border-b border-white/5 px-4 py-2 flex items-center justify-between">
+          <span className="text-amber-400 font-bold text-sm tracking-tight">Literature</span>
+          <button
+            onClick={() => setEditingProfile(true)}
+            className="profile-btn"
+            title="Edit Profile"
+          >
+            <span className="avatar-circle sm">
+              {savedAvatar || savedName.charAt(0).toUpperCase()}
+            </span>
+            <span className="text-sm text-slate-300 mr-1">{savedName}</span>
+          </button>
+        </nav>
+      )}
+
       <div ref={panelRef} className="glass-panel rounded-2xl p-8 max-w-lg w-full relative z-10" style={{ opacity: 0 }}>
         <h1 ref={titleRef} className="text-5xl font-bold text-center mb-1 title-shimmer tracking-tight" style={{ opacity: 0 }}>
           Literature

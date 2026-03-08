@@ -383,6 +383,114 @@ function ClaimDialog({ game, onClose, onClaim }: {
   );
 }
 
+// ─── Profile Edit Dialog ─────────────────────────────
+function ProfileEditDialog({ currentName, currentAvatar, onClose, onSave }: {
+  currentName: string; currentAvatar: string;
+  onClose: () => void; onSave: (name: string, avatar: string) => void;
+}) {
+  const [name, setName] = useState(currentName);
+  const [avatar, setAvatar] = useState(currentAvatar);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+    gsap.fromTo(dialogRef.current,
+      { scale: 0.9, opacity: 0, y: 30 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: 'back.out(1.7)' }
+    );
+  }, []);
+
+  function handleClose() {
+    const tl = gsap.timeline({ onComplete: onClose });
+    tl.to(dialogRef.current, { scale: 0.9, opacity: 0, y: 20, duration: 0.2, ease: 'power2.in' });
+    tl.to(overlayRef.current, { opacity: 0, duration: 0.15 }, '-=0.1');
+  }
+
+  async function handleSave() {
+    if (!name.trim()) return;
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), avatar }),
+      });
+      if (res.ok) {
+        onSave(name.trim(), avatar);
+        handleClose();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to update profile');
+      }
+    } catch {
+      setError('Connection error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-4" onClick={handleClose}>
+      <div ref={dialogRef} className="glass-panel rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h3 className="text-xl font-bold text-amber-400 mb-5">Edit Profile</h3>
+
+        {error && (
+          <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2 rounded-xl mb-4 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2 font-medium">Pick your avatar</label>
+            <div className="avatar-grid">
+              {AVATARS.map(a => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => setAvatar(a)}
+                  className={avatar === a ? 'selected' : ''}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-400 mb-2 font-medium">Your name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+              placeholder="Enter your name"
+              maxLength={20}
+              autoFocus
+              className="input-field"
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button onClick={handleClose} className="btn-secondary flex-1 py-2.5">Cancel</button>
+            <button
+              onClick={handleSave}
+              disabled={!name.trim() || saving}
+              className="btn-primary flex-1 py-2.5"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Game Page ──────────────────────────────────
 export default function GamePage() {
   const params = useParams();
@@ -393,12 +501,15 @@ export default function GamePage() {
   const [error, setError] = useState('');
   const [showAsk, setShowAsk] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [needsName, setNeedsName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [avatarInput, setAvatarInput] = useState('');
   const [nameLoading, setNameLoading] = useState(false);
+  const [myName, setMyName] = useState('');
+  const [myAvatar, setMyAvatar] = useState('');
   const prevUpdatedAt = useRef('');
   const cardsRef = useRef<HTMLDivElement>(null);
   const actionBtnsRef = useRef<HTMLDivElement>(null);
@@ -432,6 +543,8 @@ export default function GamePage() {
           setNeedsName(true);
           setLoading(false);
         } else {
+          setMyName(data.name);
+          setMyAvatar(data.avatar || '');
           fetchGame();
         }
       })
@@ -626,6 +739,15 @@ export default function GamePage() {
                 {p.id === game.myPlayerId ? 'You' : p.name}: {p.score}
               </span>
             ))}
+          <button
+            onClick={() => setShowProfileEdit(true)}
+            className="profile-btn ml-1"
+            title="Edit Profile"
+          >
+            <span className="avatar-circle sm">
+              {myAvatar || myName.charAt(0).toUpperCase() || '?'}
+            </span>
+          </button>
         </div>
       </header>
 
@@ -752,6 +874,19 @@ export default function GamePage() {
       {/* Dialogs */}
       {showAsk && <AskDialog game={game} onClose={() => setShowAsk(false)} onAsk={handleAsk} />}
       {showClaim && <ClaimDialog game={game} onClose={() => setShowClaim(false)} onClaim={handleClaim} />}
+      {showProfileEdit && (
+        <ProfileEditDialog
+          currentName={myName}
+          currentAvatar={myAvatar}
+          onClose={() => setShowProfileEdit(false)}
+          onSave={(name, avatar) => {
+            setMyName(name);
+            setMyAvatar(avatar);
+            prevUpdatedAt.current = '';
+            fetchGame();
+          }}
+        />
+      )}
     </div>
   );
 }
