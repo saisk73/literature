@@ -334,6 +334,9 @@ export default function GamePage() {
   const [showClaim, setShowClaim] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [needsName, setNeedsName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [nameLoading, setNameLoading] = useState(false);
   const prevUpdatedAt = useRef('');
 
   const fetchGame = useCallback(async () => {
@@ -356,11 +359,49 @@ export default function GamePage() {
     }
   }, [gameId]);
 
+  // Check if user has a name set before loading the game
   useEffect(() => {
-    fetchGame();
+    fetch('/api/auth')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.name) {
+          setNeedsName(true);
+          setLoading(false);
+        } else {
+          fetchGame();
+        }
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, [fetchGame]);
+
+  useEffect(() => {
+    if (needsName) return;
     const interval = setInterval(fetchGame, 1500);
     return () => clearInterval(interval);
-  }, [fetchGame]);
+  }, [fetchGame, needsName]);
+
+  async function handleSetName() {
+    if (!nameInput.trim()) return;
+    setNameLoading(true);
+    setError('');
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nameInput.trim() }),
+    });
+    if (res.ok) {
+      setNeedsName(false);
+      setNameLoading(false);
+      prevUpdatedAt.current = '';
+      fetchGame();
+    } else {
+      const data = await res.json();
+      setError(data.error || 'Failed to set name');
+      setNameLoading(false);
+    }
+  }
 
   async function handleJoin() {
     const res = await fetch(`/api/games/${gameId}/join`, { method: 'POST' });
@@ -429,6 +470,41 @@ export default function GamePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-emerald-200 text-xl">Loading game...</div>
+      </div>
+    );
+  }
+
+  if (needsName) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-emerald-900/80 rounded-2xl shadow-2xl p-8 max-w-md w-full border border-emerald-700/50">
+          <h1 className="text-3xl font-bold text-center mb-2 text-amber-300">Literature</h1>
+          <p className="text-center text-emerald-300 mb-6 text-sm">Enter your name to join the game</p>
+          {error && (
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-2 rounded-lg mb-4 text-sm">
+              {error}
+            </div>
+          )}
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSetName()}
+              placeholder="Your name"
+              maxLength={20}
+              autoFocus
+              className="w-full px-4 py-3 bg-emerald-950 border border-emerald-600 rounded-lg text-white placeholder-emerald-700 focus:outline-none focus:border-amber-400"
+            />
+            <button
+              onClick={handleSetName}
+              disabled={!nameInput.trim() || nameLoading}
+              className="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 disabled:text-gray-500 text-white font-semibold rounded-lg transition-colors"
+            >
+              {nameLoading ? 'Setting name...' : 'Continue'}
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
