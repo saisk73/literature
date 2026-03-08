@@ -573,7 +573,8 @@ export default function GamePage() {
         setError(data.error || 'Failed to load game');
         return;
       }
-      const data: GameState = await res.json();
+      const raw = await res.json();
+      const data: GameState = { ...raw, logs: JSON.parse(atob(raw.logs)) };
       if (data.updatedAt !== prevUpdatedAt.current) {
         // Detect new log entries and show alert for ask/claim actions
         if (prevLogCount.current > 0 && data.logs.length > prevLogCount.current) {

@@ -107,11 +107,11 @@ export async function GET(
       half_suit: c.half_suit,
       claimed_by: c.claimed_by || null,
     })),
-    logs: logs.map((l) => ({
+    logs: Buffer.from(JSON.stringify(logs.map((l) => ({
       action: l.action,
       playerId: l.player_id,
       details: l.details ? (typeof l.details === 'string' ? JSON.parse(l.details) : l.details) : null,
       createdAt: l.created_at,
-    })),
+    })))).toString('base64'),
   });
 }
