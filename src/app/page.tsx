@@ -195,11 +195,11 @@ export default function HomePage() {
         </nav>
       )}
 
-      <div ref={panelRef} className="glass-panel rounded-2xl p-8 max-w-lg w-full relative z-10" style={{ opacity: 0 }}>
-        <h1 ref={titleRef} className="text-5xl font-bold text-center mb-1 title-shimmer tracking-tight" style={{ opacity: 0 }}>
+      <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-lg w-full relative z-10" style={{ opacity: 0 }}>
+        <h1 ref={titleRef} className="text-3xl sm:text-5xl font-bold text-center mb-1 title-shimmer tracking-tight" style={{ opacity: 0 }}>
           Literature
         </h1>
-        <p className="text-center text-slate-500 mb-8 text-sm tracking-wide">
+        <p className="text-center text-slate-500 mb-5 sm:mb-8 text-xs sm:text-sm tracking-wide">
           The classic card game
         </p>
 
@@ -271,24 +271,24 @@ export default function HomePage() {
             /* ─── Main Menu ─── */
             <>
               {/* Profile Card */}
-              <div className="panel-section p-4 mb-6 flex items-center gap-4">
+              <div className="panel-section p-3 sm:p-4 mb-4 sm:mb-6 flex items-center gap-3 sm:gap-4">
                 <div className="avatar-circle lg">
                   {savedAvatar || savedName?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-slate-500 uppercase tracking-widest">Playing as</div>
-                  <div className="text-lg font-semibold text-white truncate">{savedName}</div>
+                  <div className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-widest">Playing as</div>
+                  <div className="text-base sm:text-lg font-semibold text-white truncate">{savedName}</div>
                 </div>
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="text-xs text-slate-500 hover:text-amber-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
+                  className="text-xs text-slate-500 hover:text-amber-400 transition-colors px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-white/5"
                 >
                   Edit
                 </button>
               </div>
 
               {/* Game Settings */}
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                 {/* Player Count */}
                 <div>
                   <label className="block text-sm text-slate-400 mb-2 font-medium">Players</label>

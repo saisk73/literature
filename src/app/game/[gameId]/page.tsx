@@ -119,13 +119,13 @@ function CardView({ card, onClick, selected, small }: {
   return (
     <div
       onClick={onClick}
-      className={`${small ? 'w-10 h-14 text-xs' : 'w-14 h-20 text-sm'} playing-card flex flex-col items-center justify-center
+      className={`${small ? 'w-9 h-[3.25rem] sm:w-10 sm:h-14 text-xs' : 'w-11 h-16 sm:w-14 sm:h-20 text-xs sm:text-sm'} playing-card flex flex-col items-center justify-center
         ${red ? 'text-red-400' : 'text-slate-200'}
         ${selected ? 'selected !border-amber-400 ring-2 ring-amber-400/30' : ''}
         ${onClick ? 'cursor-pointer' : ''}`}
     >
       <span className="font-bold leading-none">{r}</span>
-      <span className={`${small ? 'text-base' : 'text-lg'} leading-none`}>{SUIT_SYMBOLS[s]}</span>
+      <span className={`${small ? 'text-sm sm:text-base' : 'text-base sm:text-lg'} leading-none`}>{SUIT_SYMBOLS[s]}</span>
     </div>
   );
 }
@@ -156,11 +156,11 @@ function PlayerStrip({ game }: { game: GameState }) {
           >
             <PlayerAvatar player={player} size="sm" isTurn={isTurn} />
             <div className="flex flex-col">
-              <span className={`text-sm font-medium leading-tight ${isTurn ? 'text-amber-300' : isMe ? 'text-indigo-300' : 'text-slate-300'}`}>
+              <span className={`text-xs sm:text-sm font-medium leading-tight ${isTurn ? 'text-amber-300' : isMe ? 'text-indigo-300' : 'text-slate-300'}`}>
                 {isMe ? 'You' : player.name}
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-slate-500">{player.cardCount} cards</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500">{player.cardCount} cards</span>
                 {(game.scores[player.id] || 0) > 0 && (
                   <span className="text-[9px] px-1.5 py-px rounded-full bg-amber-900/40 text-amber-300 border border-amber-700/30">
                     {game.scores[player.id]} pts
@@ -216,18 +216,18 @@ function AskDialog({ game, onClose, onAsk }: {
   }
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-4" onClick={handleClose}>
-      <div ref={dialogRef} className="glass-panel rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="text-xl font-bold text-amber-400 mb-5">Ask for a Card</h3>
+    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleClose}>
+      <div ref={dialogRef} className="glass-panel rounded-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg sm:text-xl font-bold text-amber-400 mb-4 sm:mb-5">Ask for a Card</h3>
 
-        <div className="mb-5">
+        <div className="mb-4 sm:mb-5">
           <label className="block text-sm text-slate-400 mb-2 font-medium">Ask which player?</label>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1.5 sm:gap-2 flex-wrap">
             {otherPlayers.map(p => (
               <button
                 key={p.id}
                 onClick={() => setTargetId(p.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all
                   ${targetId === p.id
                     ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20'
                     : 'panel-section text-slate-300 hover:bg-white/5'}`}
@@ -239,7 +239,7 @@ function AskDialog({ game, onClose, onAsk }: {
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <label className="block text-sm text-slate-400 mb-2 font-medium">Which card?</label>
           {Object.entries(grouped).map(([hs, cards]) => (
             <div key={hs} className="mb-3">
@@ -314,13 +314,13 @@ function ClaimDialog({ game, onClose, onClaim }: {
   }
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-4" onClick={handleClose}>
-      <div ref={dialogRef} className="glass-panel rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="text-xl font-bold text-amber-400 mb-5">Claim a Half-Suit</h3>
+    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleClose}>
+      <div ref={dialogRef} className="glass-panel rounded-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg sm:text-xl font-bold text-amber-400 mb-4 sm:mb-5">Claim a Half-Suit</h3>
 
-        <div className="mb-5">
+        <div className="mb-4 sm:mb-5">
           <label className="block text-sm text-slate-400 mb-2 font-medium">Select half-suit</label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
             {unclaimedHs.map(hs => {
               const [, suit] = hs.split('_');
               const suitIsRed = suit === 'H' || suit === 'D';
@@ -434,9 +434,9 @@ function ProfileEditDialog({ currentName, currentAvatar, onClose, onSave }: {
   }
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-4" onClick={handleClose}>
-      <div ref={dialogRef} className="glass-panel rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="text-xl font-bold text-amber-400 mb-5">Edit Profile</h3>
+    <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleClose}>
+      <div ref={dialogRef} className="glass-panel rounded-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg sm:text-xl font-bold text-amber-400 mb-4 sm:mb-5">Edit Profile</h3>
 
         {error && (
           <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2 rounded-xl mb-4 text-sm">
@@ -724,24 +724,24 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-black/30 backdrop-blur-sm px-4 py-2.5 flex items-center justify-between flex-wrap gap-2 border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <h1 className="text-amber-400 font-bold text-lg tracking-tight">Literature</h1>
-          <span className="text-slate-600 text-xs font-mono bg-black/20 px-2 py-0.5 rounded-md border border-white/5">#{game.code}</span>
+      <header className="bg-black/30 backdrop-blur-sm px-2 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 border-b border-white/5">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <h1 className="text-amber-400 font-bold text-base sm:text-lg tracking-tight">Literature</h1>
+          <span className="text-slate-600 text-[10px] sm:text-xs font-mono bg-black/20 px-1.5 sm:px-2 py-0.5 rounded-md border border-white/5">#{game.code}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs overflow-x-auto scrollbar-hide flex-shrink min-w-0">
           {game.players
             .map(p => ({ ...p, score: game.scores[p.id] || 0 }))
             .sort((a, b) => b.score - a.score)
             .map(p => (
               <span key={p.id} className={`score-badge ${p.id === game.myPlayerId ? 'text-amber-300' : 'text-slate-400'}`}>
-                {p.avatar && <span className="mr-1">{p.avatar}</span>}
-                {p.id === game.myPlayerId ? 'You' : p.name}: {p.score}
+                {p.avatar && <span className="mr-0.5 sm:mr-1">{p.avatar}</span>}
+                <span className="hidden sm:inline">{p.id === game.myPlayerId ? 'You' : p.name}: </span>{p.score}
               </span>
             ))}
           <button
             onClick={() => setShowProfileEdit(true)}
-            className="profile-btn ml-1"
+            className="profile-btn ml-0.5 sm:ml-1 flex-shrink-0"
             title="Edit Profile"
           >
             <span className="avatar-circle sm">
@@ -771,43 +771,43 @@ export default function GamePage() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col lg:flex-row gap-3 p-3 lg:p-4 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-3 p-2 sm:p-3 lg:p-4 overflow-hidden">
         {/* Main Game Area */}
-        <div className="flex-1 flex flex-col gap-3 min-w-0">
+        <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0">
           {/* Player Strip */}
           <PlayerStrip game={game} />
 
           {/* My Cards */}
-          <div className="panel-section p-4 flex-shrink-0">
-            <div className="text-xs text-slate-500 mb-3 font-semibold tracking-wide uppercase">Your Cards ({sorted.length})</div>
-            <div ref={cardsRef} className="flex gap-1.5 flex-wrap justify-center">
+          <div className="panel-section p-2.5 sm:p-4 flex-shrink-0">
+            <div className="text-[10px] sm:text-xs text-slate-500 mb-2 sm:mb-3 font-semibold tracking-wide uppercase">Your Cards ({sorted.length})</div>
+            <div ref={cardsRef} className="flex gap-1 sm:gap-1.5 flex-wrap justify-center">
               {sorted.length > 0 ? (
                 Object.entries(cardsBySuit).map(([suit, cards], i) => (
-                  <div key={suit} className="flex gap-1.5 items-center">
-                    {i > 0 && <div className="w-px h-12 bg-white/5 mx-1" />}
+                  <div key={suit} className="flex gap-1 sm:gap-1.5 items-center">
+                    {i > 0 && <div className="w-px h-10 sm:h-12 bg-white/5 mx-0.5 sm:mx-1" />}
                     {cards.map(c => <CardView key={c} card={c} />)}
                   </div>
                 ))
               ) : (
-                <div className="text-slate-600 text-sm py-6">No cards in hand</div>
+                <div className="text-slate-600 text-sm py-4 sm:py-6">No cards in hand</div>
               )}
             </div>
           </div>
 
           {/* Action Buttons */}
           {game.status === 'playing' && isMyTurn && (
-            <div ref={actionBtnsRef} className="flex gap-3 justify-center">
+            <div ref={actionBtnsRef} className="flex gap-2 sm:gap-3 justify-center px-1">
               <button
                 onClick={() => setShowAsk(true)}
                 disabled={!canAsk}
-                className="btn-primary px-8 py-3 text-lg"
+                className="btn-primary px-4 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-lg flex-1 sm:flex-none"
               >
                 Ask for a Card
               </button>
               <button
                 onClick={() => setShowClaim(true)}
                 disabled={!canClaim}
-                className="btn-secondary px-8 py-3 text-lg font-semibold"
+                className="btn-secondary px-4 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-lg font-semibold flex-1 sm:flex-none"
               >
                 Claim a Set
               </button>
@@ -816,10 +816,10 @@ export default function GamePage() {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:w-80 flex flex-col gap-3 flex-shrink-0">
+        <div className="lg:w-80 flex flex-col gap-2 sm:gap-3 flex-shrink-0">
           {/* Claimed Sets */}
-          <div className="panel-section p-3">
-            <div className="text-xs text-amber-400/70 mb-2 font-semibold tracking-wide uppercase">Claimed Sets ({game.claims.length}/8)</div>
+          <div className="panel-section p-2.5 sm:p-3">
+            <div className="text-[10px] sm:text-xs text-amber-400/70 mb-2 font-semibold tracking-wide uppercase">Claimed Sets ({game.claims.length}/8)</div>
             <div className="space-y-1">
               {game.claims.length === 0 && <div className="text-slate-700 text-sm">No sets claimed yet</div>}
               {game.claims.map(c => {
@@ -987,9 +987,9 @@ function NamePrompt({ error, nameInput, setNameInput, avatarInput, setAvatarInpu
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div ref={panelRef} className="glass-panel rounded-2xl p-8 max-w-lg w-full" style={{ opacity: 0 }}>
-        <h1 className="text-3xl font-bold text-center mb-2 title-shimmer">Literature</h1>
-        <p className="text-center text-slate-500 mb-6 text-sm">Set up your profile to join</p>
+      <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-lg w-full" style={{ opacity: 0 }}>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 title-shimmer">Literature</h1>
+        <p className="text-center text-slate-500 mb-4 sm:mb-6 text-sm">Set up your profile to join</p>
         {error && (
           <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2 rounded-xl mb-4 text-sm">
             {error}
@@ -1069,14 +1069,14 @@ function LobbyView({ game, onJoin, onStart, error }: {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div ref={panelRef} className="glass-panel rounded-2xl p-8 max-w-xl w-full" style={{ opacity: 0 }}>
-        <h1 className="text-3xl font-bold title-shimmer text-center mb-1">Game Lobby</h1>
-        <p className="text-center text-slate-600 text-xs mb-5 tracking-wide">{game.maxPlayers}-player game</p>
+      <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-xl w-full" style={{ opacity: 0 }}>
+        <h1 className="text-2xl sm:text-3xl font-bold title-shimmer text-center mb-1">Game Lobby</h1>
+        <p className="text-center text-slate-600 text-xs mb-4 sm:mb-5 tracking-wide">{game.maxPlayers}-player game</p>
 
         {/* Game Code */}
-        <div className="text-center mb-6">
-          <div className="text-slate-500 text-sm mb-1.5">Share this code:</div>
-          <div className="text-4xl font-mono font-bold text-white tracking-[0.3em] panel-section py-3 select-all rounded-xl">
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="text-slate-500 text-xs sm:text-sm mb-1.5">Share this code:</div>
+          <div className="text-3xl sm:text-4xl font-mono font-bold text-white tracking-[0.3em] panel-section py-2.5 sm:py-3 select-all rounded-xl">
             {game.code}
           </div>
         </div>
