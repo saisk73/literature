@@ -38,9 +38,8 @@ export async function POST(
 
   const playerCount = await db.collection('game_players').countDocuments({ game_id: game._id });
 
-  // Allow up to 2x max_players (extra players will be paired with seated players)
-  const maxAllowed = game.max_players * 2;
-  if (playerCount >= maxAllowed) {
+  // Allow up to 24 players (extra players will be paired with seated players)
+  if (playerCount >= 24) {
     return NextResponse.json({ error: 'Game is full' }, { status: 400 });
   }
 

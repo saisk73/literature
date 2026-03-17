@@ -1430,9 +1430,13 @@ function LobbyView({ game, onJoin, onStart, error }: {
   const isInGame = game.isPlayer;
   const panelRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const hasEnoughPlayers = game.players.length >= game.maxPlayers;
-  const extraPlayers = game.players.length > game.maxPlayers ? game.players.length - game.maxPlayers : 0;
-  const emptySlotsCount = Math.max(0, game.maxPlayers - game.players.length);
+
+  // Auto-determine seat count from player count
+  const playerCount = game.players.length;
+  const computedSeatCount = [12, 8, 6].find(c => playerCount >= c) || 6;
+  const hasEnoughPlayers = playerCount >= 6;
+  const extraPlayers = playerCount > computedSeatCount ? playerCount - computedSeatCount : 0;
+  const emptySlotsCount = Math.max(0, computedSeatCount - playerCount);
 
   useEffect(() => {
     if (panelRef.current) {
@@ -1457,7 +1461,10 @@ function LobbyView({ game, onJoin, onStart, error }: {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-xl w-full" style={{ opacity: 0 }}>
         <h1 className="text-2xl sm:text-3xl font-bold title-shimmer text-center mb-1">Game Lobby</h1>
-        <p className="text-center text-slate-600 text-xs mb-4 sm:mb-5 tracking-wide">{game.maxPlayers}-seat game</p>
+        <p className="text-center text-slate-600 text-xs mb-4 sm:mb-5 tracking-wide">
+          {hasEnoughPlayers ? `${computedSeatCount} seats` : 'Need at least 6 players'}
+          {extraPlayers > 0 ? ` · ${extraPlayers} paired` : ''}
+        </p>
 
         {/* Game Code */}
         <div className="text-center mb-4 sm:mb-6">
@@ -1476,7 +1483,7 @@ function LobbyView({ game, onJoin, onStart, error }: {
         {/* Player Grid */}
         <div ref={gridRef} className="lobby-grid mb-6">
           {game.players.map((p, idx) => (
-            <div key={p.id} className={`lobby-card ${idx >= game.maxPlayers ? 'ring-1 ring-purple-500/40' : ''}`}>
+            <div key={p.id} className={`lobby-card ${idx >= computedSeatCount ? 'ring-1 ring-purple-500/40' : ''}`}>
               <div className="avatar-circle lg mb-2">
                 {p.avatar || p.name.charAt(0).toUpperCase()}
               </div>
@@ -1484,7 +1491,7 @@ function LobbyView({ game, onJoin, onStart, error }: {
               <div className="flex gap-1 mt-1 flex-wrap justify-center">
                 {p.id === game.createdBy && <span className="text-amber-400 text-[10px] bg-amber-900/30 px-1.5 py-0.5 rounded-full">Host</span>}
                 {p.id === game.myPlayerId && <span className="text-indigo-300 text-[10px] bg-indigo-900/30 px-1.5 py-0.5 rounded-full">You</span>}
-                {idx >= game.maxPlayers && <span className="text-purple-300 text-[10px] bg-purple-900/30 px-1.5 py-0.5 rounded-full">Paired</span>}
+                {idx >= computedSeatCount && <span className="text-purple-300 text-[10px] bg-purple-900/30 px-1.5 py-0.5 rounded-full">Will pair</span>}
               </div>
             </div>
           ))}
@@ -1497,11 +1504,12 @@ function LobbyView({ game, onJoin, onStart, error }: {
         </div>
 
         <div className="text-center text-slate-600 text-sm mb-2">
-          {game.players.length} players joined ({game.maxPlayers} seats)
+          {playerCount} player{playerCount !== 1 ? 's' : ''} joined
+          {hasEnoughPlayers ? ` · ${computedSeatCount} seats` : ''}
         </div>
         {extraPlayers > 0 && (
           <div className="text-center text-purple-400 text-xs mb-4">
-            {extraPlayers} extra player{extraPlayers > 1 ? 's' : ''} will be paired with random seated players
+            {extraPlayers} extra player{extraPlayers > 1 ? 's' : ''} will be paired with random seated players to share cards
           </div>
         )}
         {!extraPlayers && <div className="mb-4" />}
@@ -1518,7 +1526,7 @@ function LobbyView({ game, onJoin, onStart, error }: {
             disabled={!hasEnoughPlayers}
             className="btn-primary w-full py-3 text-lg"
           >
-            {hasEnoughPlayers ? 'Start Game' : `Waiting for ${game.maxPlayers - game.players.length} more...`}
+            {hasEnoughPlayers ? `Start Game (${computedSeatCount} seats)` : `Waiting for ${6 - playerCount} more...`}
           </button>
         )}
 

@@ -3,6 +3,16 @@ import { getVisitorId } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { createDeck, shuffleDeck } from '@/lib/game-logic';
 
+// Determine the best seat count (6, 8, or 12) for a given number of players.
+// Picks the largest valid seat count that is <= playerCount.
+function determineSeatCount(playerCount: number): number | null {
+  const validCounts = [12, 8, 6]; // descending
+  for (const count of validCounts) {
+    if (playerCount >= count) return count;
+  }
+  return null; // not enough players
+}
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: { gameId: string } }
@@ -33,10 +43,13 @@ export async function POST(
     .sort({ seat_position: 1 })
     .toArray();
 
-  const seatCount = game.max_players; // 6, 8, or 12
+  const seatCount = determineSeatCount(players.length);
 
-  if (players.length < seatCount) {
-    return NextResponse.json({ error: `Need at least ${seatCount} players to start` }, { status: 400 });
+  if (!seatCount) {
+    return NextResponse.json(
+      { error: `Need at least 6 players to start (currently ${players.length})` },
+      { status: 400 }
+    );
   }
 
   // First seatCount players are primary seat holders
@@ -66,11 +79,13 @@ export async function POST(
 
   await db.collection('game_cards').insertMany(cardDocs);
 
+  // Store the determined seat count as max_players
   await db.collection('games').updateOne(
     { _id: game._id },
     {
       $set: {
         status: 'playing',
+        max_players: seatCount,
         current_turn_player_id: primaryPlayers[0].player_id,
         updated_at: new Date(),
       },
@@ -82,7 +97,9 @@ export async function POST(
     action: 'game_started',
     player_id: visitorId,
     details: {
-      message: 'Game started! Cards have been dealt.',
+      message: `Game started with ${players.length} players in ${seatCount} seats!`,
+      seatCount,
+      totalPlayers: players.length,
       pairedPlayers: extraPlayers.length > 0
         ? extraPlayers.map((ep) => ep.player_id)
         : undefined,
