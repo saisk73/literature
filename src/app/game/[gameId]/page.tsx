@@ -972,6 +972,21 @@ export default function GamePage() {
     }
   }
 
+  async function handleRemovePlayer(playerId: string) {
+    const res = await fetch(`/api/games/${gameId}/remove-player`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerId }),
+    });
+    if (res.ok) {
+      prevUpdatedAt.current = '';
+      fetchGame();
+    } else {
+      const data = await res.json();
+      setError(data.error);
+    }
+  }
+
   async function handleAsk(targetId: string, card: string) {
     setShowAsk(false);
     const res = await fetch(`/api/games/${gameId}/ask`, {
@@ -1028,7 +1043,7 @@ export default function GamePage() {
   if (!game) return null;
 
   if (game.status === 'waiting') {
-    return <LobbyView game={game} onJoin={handleJoin} onStart={handleStart} error={error} />;
+    return <LobbyView game={game} onJoin={handleJoin} onStart={handleStart} onRemovePlayer={handleRemovePlayer} error={error} />;
   }
 
   // ─── Playing / Finished ────────────────────────
@@ -1423,8 +1438,8 @@ function NamePrompt({ error, nameInput, setNameInput, avatarInput, setAvatarInpu
 }
 
 // ─── Lobby View ──────────────────────────────────────
-function LobbyView({ game, onJoin, onStart, error }: {
-  game: GameState; onJoin: () => void; onStart: () => void; error: string;
+function LobbyView({ game, onJoin, onStart, onRemovePlayer, error }: {
+  game: GameState; onJoin: () => void; onStart: () => void; onRemovePlayer: (playerId: string) => void; error: string;
 }) {
   const isHost = game.createdBy === game.myPlayerId;
   const isInGame = game.isPlayer;
@@ -1483,7 +1498,16 @@ function LobbyView({ game, onJoin, onStart, error }: {
         {/* Player Grid */}
         <div ref={gridRef} className="lobby-grid mb-6">
           {game.players.map((p, idx) => (
-            <div key={p.id} className={`lobby-card ${idx >= computedSeatCount ? 'ring-1 ring-purple-500/40' : ''}`}>
+            <div key={p.id} className={`lobby-card relative ${idx >= computedSeatCount ? 'ring-1 ring-purple-500/40' : ''}`}>
+              {isHost && p.id !== game.createdBy && (
+                <button
+                  onClick={() => onRemovePlayer(p.id)}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white text-xs flex items-center justify-center leading-none transition-colors"
+                  title={`Remove ${p.name}`}
+                >
+                  &times;
+                </button>
+              )}
               <div className="avatar-circle lg mb-2">
                 {p.avatar || p.name.charAt(0).toUpperCase()}
               </div>
