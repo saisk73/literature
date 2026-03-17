@@ -63,7 +63,6 @@ export default function HomePage() {
   const [savedName, setSavedName] = useState<string | null>(null);
   const [savedAvatar, setSavedAvatar] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');
-  const [maxPlayers, setMaxPlayers] = useState(6);
   const [showLog, setShowLog] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -141,7 +140,7 @@ export default function HomePage() {
     const res = await fetch('/api/games', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ maxPlayers, showLog }),
+      body: JSON.stringify({ showLog }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -289,25 +288,6 @@ export default function HomePage() {
 
               {/* Game Settings */}
               <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-                {/* Player Count */}
-                <div>
-                  <label className="block text-sm text-slate-400 mb-2 font-medium">Players</label>
-                  <div className="flex gap-2">
-                    {[6, 8, 12].map(n => (
-                      <button
-                        key={n}
-                        onClick={() => setMaxPlayers(n)}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all
-                          ${maxPlayers === n
-                            ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20'
-                            : 'btn-secondary'}`}
-                      >
-                        {n} players
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Game Log Toggle */}
                 <div className="flex items-center justify-between">
                   <label className="text-sm text-slate-400 font-medium">Game Log</label>
@@ -323,6 +303,10 @@ export default function HomePage() {
                     Game log will be hidden for all players
                   </div>
                 )}
+
+                <div className="text-xs text-slate-500 text-center">
+                  Seats (6, 8, or 12) are auto-determined based on how many players join
+                </div>
               </div>
 
               {/* Create Game */}
@@ -360,7 +344,7 @@ export default function HomePage() {
               <div className="mt-8 pt-6 border-t border-white/5">
                 <h3 className="text-amber-400/80 font-semibold mb-2 text-sm">How to Play</h3>
                 <ul className="text-slate-500 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
-                  <li>6, 8, or 12 players, each playing individually</li>
+                  <li>6+ players — seats (6, 8, or 12) auto-fit to player count, extras pair up</li>
                   <li>48 cards (no 7s), 8 half-suits of 6 cards each</li>
                   <li>Ask any other player for specific cards you need</li>
                   <li>Claim half-suits by declaring who holds each card</li>

@@ -89,11 +89,15 @@ export async function GET(
     }
   }
 
+  // For waiting games, compute what the seat count would be
+  const validCounts = [12, 8, 6];
+  const computedSeatCount = game.max_players || (validCounts.find(c => players.length >= c) || 6);
+
   return NextResponse.json({
     id: game._id,
     code: game.code,
     status: game.status,
-    maxPlayers: game.max_players,
+    maxPlayers: computedSeatCount,
     currentTurnPlayerId: game.current_turn_player_id,
     createdBy: game.created_by,
     scores,
