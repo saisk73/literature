@@ -248,8 +248,8 @@ function CardView({ card, onClick, selected, small }: {
     <div
       onClick={onClick}
       className={`${small ? 'w-9 h-[3.25rem] sm:w-10 sm:h-14 text-xs' : 'w-11 h-16 sm:w-14 sm:h-20 text-xs sm:text-sm'} playing-card flex flex-col items-center justify-center
-        ${red ? 'text-red-400' : 'text-slate-200'}
-        ${selected ? 'selected !border-amber-400 ring-2 ring-amber-400/30' : ''}
+        ${red ? 'text-card-red' : 'text-card-black'}
+        ${selected ? 'selected !border-gold ring-2 ring-gold/30' : ''}
         ${onClick ? 'cursor-pointer' : ''}`}
     >
       <span className="font-bold leading-none">{r}</span>
@@ -333,18 +333,18 @@ function PlayerStrip({ game, playerEmoji }: { game: GameState; playerEmoji?: { p
           >
             <PlayerAvatar player={player} size="sm" isTurn={isTurn} />
             <div className="flex flex-col min-w-0">
-              <span className={`text-xs sm:text-sm font-medium leading-tight truncate ${isTurn ? 'text-amber-300' : isMe || isMePaired ? 'text-indigo-300' : 'text-slate-300'}`}>
+              <span className={`text-xs sm:text-sm font-medium leading-tight truncate ${isTurn ? 'text-gold-light' : isMe || isMePaired ? 'text-burgundy-light' : 'text-gold-light/80'}`}>
                 {isMe ? 'You' : player.name}
                 {pairedBuddies.length > 0 && (
-                  <span className="text-purple-400 text-[9px] ml-1">
+                  <span className="text-burgundy-light text-[9px] ml-1">
                     +{pairedBuddies.map(b => b.id === game.myPlayerId ? 'You' : b.name).join(', ')}
                   </span>
                 )}
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] sm:text-[10px] text-slate-500">{player.cardCount} cards</span>
+                <span className="text-[9px] sm:text-[10px] text-gold-light/40">{player.cardCount} cards</span>
                 {(game.scores[player.id] || 0) > 0 && (
-                  <span className="text-[9px] px-1.5 py-px rounded-full bg-amber-900/40 text-amber-300 border border-amber-700/30">
+                  <span className="text-[9px] px-1.5 py-px rounded-full bg-gold-dark/25 text-gold-light border border-gold-dark/30">
                     {game.scores[player.id]} pts
                   </span>
                 )}
@@ -400,10 +400,10 @@ function AskDialog({ game, onClose, onAsk }: {
   return (
     <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleClose}>
       <div ref={dialogRef} className="glass-panel rounded-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg sm:text-xl font-bold text-amber-400 mb-4 sm:mb-5">Ask for a Card</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-gold mb-4 sm:mb-5">Ask for a Card</h3>
 
         <div className="mb-4 sm:mb-5">
-          <label className="block text-sm text-slate-400 mb-2 font-medium">Ask which player?</label>
+          <label className="block text-sm text-gold-light/60 mb-2 font-medium">Ask which player?</label>
           <div className="flex gap-1.5 sm:gap-2 flex-wrap">
             {otherPlayers.map(p => (
               <button
@@ -411,8 +411,8 @@ function AskDialog({ game, onClose, onAsk }: {
                 onClick={() => setTargetId(p.id)}
                 className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition-all
                   ${targetId === p.id
-                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20'
-                    : 'panel-section text-slate-300 hover:bg-white/5'}`}
+                    ? 'bg-gold text-wood-dark shadow-lg shadow-gold/20'
+                    : 'panel-section text-gold-light/80 hover:bg-felt-light/15'}`}
               >
                 <PlayerAvatar player={p} size="sm" />
                 <span>{p.name} ({p.cardCount})</span>
@@ -422,10 +422,10 @@ function AskDialog({ game, onClose, onAsk }: {
         </div>
 
         <div className="mb-4 sm:mb-6">
-          <label className="block text-sm text-slate-400 mb-2 font-medium">Which card?</label>
+          <label className="block text-sm text-gold-light/60 mb-2 font-medium">Which card?</label>
           {Object.entries(grouped).map(([hs, cards]) => (
             <div key={hs} className="mb-3">
-              <div className="text-xs text-slate-500 mb-1 font-medium">{halfSuitName(hs)}</div>
+              <div className="text-xs text-gold-light/40 mb-1 font-medium">{halfSuitName(hs)}</div>
               <div className="flex gap-2 flex-wrap">
                 {cards.map(c => (
                   <CardView key={c} card={c} small selected={selectedCard === c} onClick={() => setSelectedCard(c)} />
@@ -434,7 +434,7 @@ function AskDialog({ game, onClose, onAsk }: {
             </div>
           ))}
           {validCards.length === 0 && (
-            <p className="text-slate-600 text-sm">No valid cards to ask for.</p>
+            <p className="text-gold-light/40 text-sm">No valid cards to ask for.</p>
           )}
         </div>
 
@@ -498,10 +498,10 @@ function ClaimDialog({ game, onClose, onClaim }: {
   return (
     <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleClose}>
       <div ref={dialogRef} className="glass-panel rounded-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg sm:text-xl font-bold text-amber-400 mb-4 sm:mb-5">Claim a Half-Suit</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-gold mb-4 sm:mb-5">Claim a Half-Suit</h3>
 
         <div className="mb-4 sm:mb-5">
-          <label className="block text-sm text-slate-400 mb-2 font-medium">Select half-suit</label>
+          <label className="block text-sm text-gold-light/60 mb-2 font-medium">Select half-suit</label>
           <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
             {unclaimedHs.map(hs => {
               const [, suit] = hs.split('_');
@@ -512,9 +512,9 @@ function ClaimDialog({ game, onClose, onClaim }: {
                   onClick={() => selectHalfSuit(hs)}
                   className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all
                     ${selectedHs === hs
-                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20'
-                      : 'panel-section hover:bg-white/5'}
-                    ${suitIsRed && selectedHs !== hs ? 'text-red-300' : selectedHs !== hs ? 'text-slate-300' : ''}`}
+                      ? 'bg-gold text-wood-dark shadow-lg shadow-gold/20'
+                      : 'panel-section hover:bg-felt-light/15'}
+                    ${suitIsRed && selectedHs !== hs ? 'text-card-red' : selectedHs !== hs ? 'text-gold-light/80' : ''}`}
                 >
                   {halfSuitName(hs)}
                 </button>
@@ -525,7 +525,7 @@ function ClaimDialog({ game, onClose, onClaim }: {
 
         {selectedHs && (
           <div className="mb-6">
-            <label className="block text-sm text-slate-400 mb-2 font-medium">
+            <label className="block text-sm text-gold-light/60 mb-2 font-medium">
               Assign each card to a player
             </label>
             <div className="space-y-2">
@@ -535,7 +535,7 @@ function ClaimDialog({ game, onClose, onClaim }: {
                   <select
                     value={assignments[card] || ''}
                     onChange={e => setAssignments({ ...assignments, [card]: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-[rgba(15,15,30,0.6)] border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-amber-400/40 transition-all"
+                    className="flex-1 px-3 py-2 bg-[rgba(10,35,16,0.7)] border border-wood/30 rounded-xl text-gold-light text-sm focus:outline-none focus:border-gold/40 transition-all"
                   >
                     <option value="">-- Select player --</option>
                     {game.players.map(p => (
@@ -585,34 +585,34 @@ function RulesSidebar({ onClose }: { onClose: () => void }) {
     <div ref={overlayRef} className="fixed inset-0 bg-black/60 dialog-backdrop z-50" onClick={handleClose}>
       <div
         ref={panelRef}
-        className="absolute right-0 top-0 h-full w-full max-w-md bg-[rgba(12,10,24,0.97)] border-l border-white/10 overflow-y-auto rules-sidebar"
+        className="absolute right-0 top-0 h-full w-full max-w-md bg-[rgba(10,35,16,0.97)] border-l border-wood/30 overflow-y-auto rules-sidebar"
         onClick={e => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-[rgba(12,10,24,0.97)] border-b border-white/10 px-5 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold text-amber-400">How to Play Literature</h2>
-          <button onClick={handleClose} className="text-slate-400 hover:text-white transition-colors text-xl leading-none p-1">&times;</button>
+        <div className="sticky top-0 bg-[rgba(10,35,16,0.97)] border-b border-wood/30 px-5 py-4 flex items-center justify-between z-10">
+          <h2 className="text-lg font-bold text-gold">How to Play Literature</h2>
+          <button onClick={handleClose} className="text-gold-light/60 hover:text-gold-light transition-colors text-xl leading-none p-1">&times;</button>
         </div>
 
-        <div className="px-5 py-4 space-y-5 text-sm text-slate-300 leading-relaxed">
+        <div className="px-5 py-4 space-y-5 text-sm text-gold-light/80 leading-relaxed">
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Overview</h3>
+            <h3 className="text-gold/90 font-semibold text-base mb-2">Overview</h3>
             <p>Literature is a team-based card game for 6 or 8 players. Players split into two teams and try to collect &ldquo;half-suits&rdquo; by asking opponents for specific cards.</p>
           </section>
 
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">The Deck</h3>
-            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+            <h3 className="text-gold/90 font-semibold text-base mb-2">The Deck</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-gold/60">
               <li>Uses a standard 48-card deck (no 7s)</li>
-              <li>Each suit is split into two <strong className="text-slate-200">half-suits</strong> of 6 cards each</li>
-              <li><strong className="text-slate-200">Low</strong>: A, 2, 3, 4, 5, 6</li>
-              <li><strong className="text-slate-200">High</strong>: 8, 9, 10, J, Q, K</li>
+              <li>Each suit is split into two <strong className="text-gold-light">half-suits</strong> of 6 cards each</li>
+              <li><strong className="text-gold-light">Low</strong>: A, 2, 3, 4, 5, 6</li>
+              <li><strong className="text-gold-light">High</strong>: 8, 9, 10, J, Q, K</li>
               <li>There are 8 half-suits total (4 suits &times; 2)</li>
             </ul>
           </section>
 
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Teams &amp; Seating</h3>
-            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+            <h3 className="text-gold/90 font-semibold text-base mb-2">Teams &amp; Seating</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-gold/60">
               <li>Players are divided into Team 1 and Team 2</li>
               <li>Teammates sit in alternating seats around the table</li>
               <li>Cards are dealt evenly to all players</li>
@@ -620,30 +620,30 @@ function RulesSidebar({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Asking for Cards</h3>
-            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
-              <li>On your turn, ask any <strong className="text-slate-200">opponent</strong> for a specific card</li>
+            <h3 className="text-gold/90 font-semibold text-base mb-2">Asking for Cards</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-gold/60">
+              <li>On your turn, ask any <strong className="text-gold-light">opponent</strong> for a specific card</li>
               <li>You must hold at least one card from the same half-suit</li>
-              <li>You <strong className="text-slate-200">cannot</strong> ask for a card you already have</li>
-              <li><strong className="text-slate-200">Success</strong>: You get the card and take another turn</li>
-              <li><strong className="text-slate-200">Fail</strong>: The turn passes to the player you asked</li>
+              <li>You <strong className="text-gold-light">cannot</strong> ask for a card you already have</li>
+              <li><strong className="text-gold-light">Success</strong>: You get the card and take another turn</li>
+              <li><strong className="text-gold-light">Fail</strong>: The turn passes to the player you asked</li>
             </ul>
           </section>
 
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Claiming Half-Suits</h3>
-            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+            <h3 className="text-gold/90 font-semibold text-base mb-2">Claiming Half-Suits</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-gold/60">
               <li>Any player can attempt to claim a half-suit at any time</li>
               <li>To claim, declare which teammate holds each of the 6 cards</li>
-              <li><strong className="text-slate-200">Correct claim</strong>: Your team scores 1 point</li>
-              <li><strong className="text-slate-200">Wrong claim</strong>: The opposing team scores 1 point</li>
-              <li>If your team holds all 6 cards of a half-suit, it&apos;s <strong className="text-slate-200">auto-claimed</strong></li>
+              <li><strong className="text-gold-light">Correct claim</strong>: Your team scores 1 point</li>
+              <li><strong className="text-gold-light">Wrong claim</strong>: The opposing team scores 1 point</li>
+              <li>If your team holds all 6 cards of a half-suit, it&apos;s <strong className="text-gold-light">auto-claimed</strong></li>
             </ul>
           </section>
 
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Winning</h3>
-            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+            <h3 className="text-gold/90 font-semibold text-base mb-2">Winning</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-gold/60">
               <li>The game ends when all 8 half-suits have been claimed</li>
               <li>The team with more points wins (max 8 points)</li>
               <li>First team to reach 5 points wins immediately</li>
@@ -651,8 +651,8 @@ function RulesSidebar({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="text-amber-400/90 font-semibold text-base mb-2">Strategy Tips</h3>
-            <ul className="space-y-1.5 list-disc list-inside marker:text-amber-600/60">
+            <h3 className="text-gold/90 font-semibold text-base mb-2">Strategy Tips</h3>
+            <ul className="space-y-1.5 list-disc list-inside marker:text-gold/60">
               <li>Pay attention to who asks for what &mdash; it reveals information</li>
               <li>Failed asks also give valuable clues to everyone</li>
               <li>Communicate with teammates through your asking patterns</li>
@@ -719,7 +719,7 @@ function ProfileEditDialog({ currentName, currentAvatar, soundEnabled, onClose, 
   return (
     <div ref={overlayRef} className="fixed inset-0 bg-black/70 dialog-backdrop flex items-center justify-center z-50 p-2 sm:p-4" onClick={handleClose}>
       <div ref={dialogRef} className="glass-panel rounded-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg sm:text-xl font-bold text-amber-400 mb-4 sm:mb-5">Edit Profile</h3>
+        <h3 className="text-lg sm:text-xl font-bold text-gold mb-4 sm:mb-5">Edit Profile</h3>
 
         {error && (
           <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2 rounded-xl mb-4 text-sm">
@@ -729,7 +729,7 @@ function ProfileEditDialog({ currentName, currentAvatar, soundEnabled, onClose, 
 
         <div className="space-y-5">
           <div>
-            <label className="block text-sm text-slate-400 mb-2 font-medium">Pick your avatar</label>
+            <label className="block text-sm text-gold-light/60 mb-2 font-medium">Pick your avatar</label>
             <div className="avatar-grid">
               {AVATARS.map(a => (
                 <button
@@ -745,7 +745,7 @@ function ProfileEditDialog({ currentName, currentAvatar, soundEnabled, onClose, 
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2 font-medium">Your name</label>
+            <label className="block text-sm text-gold-light/60 mb-2 font-medium">Your name</label>
             <input
               type="text"
               value={name}
@@ -759,19 +759,19 @@ function ProfileEditDialog({ currentName, currentAvatar, soundEnabled, onClose, 
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2 font-medium">Sound Settings</label>
+            <label className="block text-sm text-gold-light/60 mb-2 font-medium">Sound Settings</label>
             <button
               type="button"
               onClick={onToggleSound}
               className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all border ${
                 soundEnabled
-                  ? 'bg-amber-900/30 border-amber-600/30 text-amber-300'
-                  : 'bg-[rgba(15,15,30,0.6)] border-white/10 text-slate-400'
+                  ? 'bg-gold-dark/20 border-gold/30 text-gold-light'
+                  : 'bg-[rgba(10,35,16,0.6)] border-wood/20 text-gold-light/60'
               }`}
             >
               <span className="text-xl">{soundEnabled ? '🔊' : '🔇'}</span>
               <span className="text-sm font-medium">{soundEnabled ? 'Sound On' : 'Sound Off'}</span>
-              <div className={`ml-auto w-10 h-5 rounded-full transition-all relative ${soundEnabled ? 'bg-amber-600' : 'bg-slate-700'}`}>
+              <div className={`ml-auto w-10 h-5 rounded-full transition-all relative ${soundEnabled ? 'bg-gold' : 'bg-felt-dark'}`}>
                 <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${soundEnabled ? 'left-5' : 'left-0.5'}`} />
               </div>
             </button>
@@ -993,7 +993,7 @@ export default function GamePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-slate-400 text-xl animate-pulse">Loading game...</div>
+        <div className="text-gold-light/50 text-xl animate-pulse">Loading game...</div>
       </div>
     );
   }
@@ -1053,10 +1053,10 @@ export default function GamePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-black/30 backdrop-blur-sm px-2 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 border-b border-white/5">
+      <header className="bg-wood-dark/60 backdrop-blur-sm px-2 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 border-b border-wood/30">
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-          <h1 className="text-amber-400 font-bold text-base sm:text-lg tracking-tight">Literature</h1>
-          <span className="text-slate-600 text-[10px] sm:text-xs font-mono bg-black/20 px-1.5 sm:px-2 py-0.5 rounded-md border border-white/5">#{game.code}</span>
+          <h1 className="text-gold font-bold font-heading text-base sm:text-lg tracking-tight">Literature</h1>
+          <span className="text-gold-light/40 text-[10px] sm:text-xs font-mono bg-felt-dark/40 px-1.5 sm:px-2 py-0.5 rounded-md border border-wood/20">#{game.code}</span>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <button
@@ -1083,7 +1083,7 @@ export default function GamePage() {
 
       {/* Turn Indicator */}
       {game.status === 'playing' && (
-        <div className={`px-4 py-2.5 text-center text-sm font-medium ${isMyTurn ? 'turn-banner text-amber-300' : 'bg-black/15 text-slate-500 border-b border-white/5'}`}>
+        <div className={`px-4 py-2.5 text-center text-sm font-medium ${isMyTurn ? 'turn-banner text-gold-light' : 'bg-felt-dark/30 text-gold-light/50 border-b border-wood/20'}`}>
           {isMyTurn && !isPairedObserver
             ? "Your turn - ask for a card"
             : isMyTurn && isPairedObserver
@@ -1110,17 +1110,17 @@ export default function GamePage() {
 
           {/* My Cards */}
           <div className="panel-section p-2.5 sm:p-4 flex-shrink-0">
-            <div className="text-[10px] sm:text-xs text-slate-500 mb-2 sm:mb-3 font-semibold tracking-wide uppercase">Your Cards ({sorted.length})</div>
+            <div className="text-[10px] sm:text-xs text-gold-light/40 mb-2 sm:mb-3 font-semibold tracking-wide uppercase">Your Cards ({sorted.length})</div>
             <div ref={cardsRef} className="flex gap-1 sm:gap-1.5 flex-wrap justify-center">
               {sorted.length > 0 ? (
                 Object.entries(cardsBySuit).map(([suit, cards], i) => (
                   <div key={suit} className="flex gap-1 sm:gap-1.5 items-center">
-                    {i > 0 && <div className="w-px h-10 sm:h-12 bg-white/5 mx-0.5 sm:mx-1" />}
+                    {i > 0 && <div className="w-px h-10 sm:h-12 bg-wood/20 mx-0.5 sm:mx-1" />}
                     {cards.map(c => <CardView key={c} card={c} />)}
                   </div>
                 ))
               ) : (
-                <div className="text-slate-600 text-sm py-4 sm:py-6">No cards in hand</div>
+                <div className="text-gold-light/40 text-sm py-4 sm:py-6">No cards in hand</div>
               )}
             </div>
           </div>
@@ -1140,7 +1140,7 @@ export default function GamePage() {
 
           {/* Game Log */}
           <div className="panel-section p-3 flex-1 min-h-0 overflow-hidden flex flex-col">
-            <div className="text-xs text-slate-500 mb-2 font-semibold tracking-wide uppercase">
+            <div className="text-xs text-gold-light/40 mb-2 font-semibold tracking-wide uppercase">
               {game.showLog ? 'Game Log' : 'Recent Activity'}
             </div>
             <div className="overflow-y-auto flex-1 space-y-1 text-xs game-log">
@@ -1150,7 +1150,7 @@ export default function GamePage() {
                 const isSuccess = log.action === 'ask_success' || log.action === 'claim' || log.action === 'auto_claim';
                 const isFail = log.action === 'ask_fail' || (log.action === 'claim' && log.details?.result === 'forfeited');
                 return (
-                  <div key={i} className={`flex items-center gap-2 py-1.5 border-b border-white/5 ${isSuccess ? 'text-green-400/80' : isFail ? 'text-red-400/70' : 'text-slate-500'}`}>
+                  <div key={i} className={`flex items-center gap-2 py-1.5 border-b border-wood/20 ${isSuccess ? 'text-green-400/80' : isFail ? 'text-red-400/70' : 'text-gold-light/50'}`}>
                     <span className="text-base flex-shrink-0">{icon}</span>
                     {logCard && (
                       <span className="flex-shrink-0">
@@ -1161,7 +1161,7 @@ export default function GamePage() {
                   </div>
                 );
               })}
-              {game.logs.length === 0 && <div className="text-slate-700">No actions yet</div>}
+              {game.logs.length === 0 && <div className="text-gold-light/25">No actions yet</div>}
             </div>
           </div>
         </div>
@@ -1170,9 +1170,9 @@ export default function GamePage() {
         <div className="lg:w-80 flex flex-col gap-2 sm:gap-3 flex-shrink-0">
           {/* Claimed Sets */}
           <div className="panel-section p-2.5 sm:p-3">
-            <div className="text-[10px] sm:text-xs text-amber-400/70 mb-2 font-semibold tracking-wide uppercase">Claimed Sets ({game.claims.length}/8)</div>
+            <div className="text-[10px] sm:text-xs text-gold/70 mb-2 font-semibold tracking-wide uppercase">Claimed Sets ({game.claims.length}/8)</div>
             <div className="space-y-1">
-              {game.claims.length === 0 && <div className="text-slate-700 text-sm">No sets claimed yet</div>}
+              {game.claims.length === 0 && <div className="text-gold-light/25 text-sm">No sets claimed yet</div>}
               {game.claims.map(c => {
                 const claimerName = c.claimed_by
                   ? (game.players.find(p => p.id === c.claimed_by)?.name || 'Unknown')
@@ -1181,11 +1181,11 @@ export default function GamePage() {
                   ? (game.players.find(p => p.id === c.claimed_by)?.avatar || '')
                   : '';
                 return (
-                  <div key={c.half_suit} className="flex items-center justify-between text-sm px-2.5 py-1.5 rounded-lg bg-black/20 border border-white/5">
-                    <span className={c.half_suit.split('_')[1] === 'H' || c.half_suit.split('_')[1] === 'D' ? 'text-red-300' : 'text-slate-300'}>
+                  <div key={c.half_suit} className="flex items-center justify-between text-sm px-2.5 py-1.5 rounded-lg bg-felt-dark/30 border border-wood/20">
+                    <span className={c.half_suit.split('_')[1] === 'H' || c.half_suit.split('_')[1] === 'D' ? 'text-card-red' : 'text-gold-light/80'}>
                       {halfSuitName(c.half_suit)}
                     </span>
-                    <span className={claimerName ? 'text-amber-300' : 'text-slate-600'}>
+                    <span className={claimerName ? 'text-gold-light' : 'text-gold-light/40'}>
                       {claimerAvatar && <span className="mr-1">{claimerAvatar}</span>}
                       {claimerName || 'Forfeited'}
                     </span>
@@ -1196,10 +1196,10 @@ export default function GamePage() {
                 .filter(hs => !game.claims.find(c => c.half_suit === hs))
                 .map(hs => (
                   <div key={hs} className="flex items-center justify-between text-sm px-2.5 py-1.5 rounded-lg opacity-25">
-                    <span className={hs.split('_')[1] === 'H' || hs.split('_')[1] === 'D' ? 'text-red-300' : 'text-slate-300'}>
+                    <span className={hs.split('_')[1] === 'H' || hs.split('_')[1] === 'D' ? 'text-card-red' : 'text-gold-light/80'}>
                       {halfSuitName(hs)}
                     </span>
-                    <span className="text-slate-700 text-xs">unclaimed</span>
+                    <span className="text-gold-light/25 text-xs">unclaimed</span>
                   </div>
                 ))}
             </div>
@@ -1273,7 +1273,7 @@ function ActionAlert({ alert, onDismiss }: { alert: ActionAlertData | null; onDi
 
   const isSuccess = alert.type === 'ask_success' || alert.type === 'claim' || alert.type === 'auto_claim';
   const isFail = alert.type === 'ask_fail';
-  const borderColor = isSuccess ? 'border-green-500/30' : isFail ? 'border-red-500/30' : 'border-amber-500/20';
+  const borderColor = isSuccess ? 'border-green-500/30' : isFail ? 'border-red-500/30' : 'border-gold/25';
   const icon = alert.type === 'ask_success' ? '🃏' : alert.type === 'ask_fail' ? '✋' : alert.type === 'claim' || alert.type === 'auto_claim' ? '🏆' : '';
 
   return (
@@ -1286,11 +1286,11 @@ function ActionAlert({ alert, onDismiss }: { alert: ActionAlertData | null; onDi
               <CardView card={alert.card} small />
             </div>
           )}
-          <div className={`text-base sm:text-lg font-bold ${isSuccess ? 'text-green-300' : isFail ? 'text-red-300' : 'text-amber-200'}`}>
+          <div className={`text-base sm:text-lg font-bold ${isSuccess ? 'text-green-300' : isFail ? 'text-red-300' : 'text-gold-light'}`}>
             {alert.message}
           </div>
         </div>
-        <div ref={progressRef} className={`absolute bottom-0 left-0 right-0 h-0.5 ${isSuccess ? 'bg-green-400/40' : isFail ? 'bg-red-400/40' : 'bg-amber-400/40'} origin-left`} />
+        <div ref={progressRef} className={`absolute bottom-0 left-0 right-0 h-0.5 ${isSuccess ? 'bg-green-400/40' : isFail ? 'bg-red-400/40' : 'bg-gold/40'} origin-left`} />
       </div>
     </div>
   );
@@ -1327,13 +1327,13 @@ function GameFinishedBanner({ game, router }: { game: GameState; router: ReturnT
   }, []);
 
   return (
-    <div ref={ref} className="bg-gradient-to-r from-transparent via-amber-600/15 to-transparent border-b border-amber-600/20 px-4 py-5 text-center origin-top">
-      <div className="winner-text text-2xl font-bold text-amber-300 mb-1">
+    <div ref={ref} className="bg-gradient-to-r from-transparent via-gold/15 to-transparent border-b border-gold/25 px-4 py-5 text-center origin-top">
+      <div className="winner-text text-2xl font-bold text-gold-light mb-1">
         {game.winner === 'tie'
           ? "It's a Tie!"
           : `${winnerPlayer?.avatar ? winnerPlayer.avatar + ' ' : ''}${winnerPlayer?.name || 'Unknown'} Wins!`}
       </div>
-      <div className="text-slate-400 text-sm mt-1 flex justify-center gap-3 flex-wrap">
+      <div className="text-gold-light/60 text-sm mt-1 flex justify-center gap-3 flex-wrap">
         {scoreboard.map(p => (
           <span key={p.id}>
             {p.avatar && <span className="mr-0.5">{p.avatar}</span>}
@@ -1372,7 +1372,7 @@ function NamePrompt({ error, nameInput, setNameInput, avatarInput, setAvatarInpu
     <div className="min-h-screen flex items-center justify-center p-4">
       <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-lg w-full" style={{ opacity: 0 }}>
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 title-shimmer">Literature</h1>
-        <p className="text-center text-slate-500 mb-4 sm:mb-6 text-sm">Set up your profile to join</p>
+        <p className="text-center text-gold-light/40 mb-4 sm:mb-6 text-sm">Set up your profile to join</p>
         {error && (
           <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2 rounded-xl mb-4 text-sm">
             {error}
@@ -1380,7 +1380,7 @@ function NamePrompt({ error, nameInput, setNameInput, avatarInput, setAvatarInpu
         )}
         <div className="space-y-5">
           <div>
-            <label className="block text-sm text-slate-400 mb-2 font-medium">Pick an avatar</label>
+            <label className="block text-sm text-gold-light/60 mb-2 font-medium">Pick an avatar</label>
             <div className="avatar-grid">
               {AVATARS.map(a => (
                 <button
@@ -1396,7 +1396,7 @@ function NamePrompt({ error, nameInput, setNameInput, avatarInput, setAvatarInpu
           </div>
 
           <div>
-            <label className="block text-sm text-slate-400 mb-2 font-medium">Your name</label>
+            <label className="block text-sm text-gold-light/60 mb-2 font-medium">Your name</label>
             <input
               type="text"
               value={nameInput}
@@ -1461,14 +1461,14 @@ function LobbyView({ game, onJoin, onStart, error }: {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div ref={panelRef} className="glass-panel rounded-2xl p-5 sm:p-8 max-w-xl w-full" style={{ opacity: 0 }}>
         <h1 className="text-2xl sm:text-3xl font-bold title-shimmer text-center mb-1">Game Lobby</h1>
-        <p className="text-center text-slate-600 text-xs mb-4 sm:mb-5 tracking-wide">
+        <p className="text-center text-gold-light/40 text-xs mb-4 sm:mb-5 tracking-wide">
           {hasEnoughPlayers ? `${computedSeatCount} seats` : 'Need at least 6 players'}
           {extraPlayers > 0 ? ` · ${extraPlayers} paired` : ''}
         </p>
 
         {/* Game Code */}
         <div className="text-center mb-4 sm:mb-6">
-          <div className="text-slate-500 text-xs sm:text-sm mb-1.5">Share this code:</div>
+          <div className="text-gold-light/50 text-xs sm:text-sm mb-1.5">Share this code:</div>
           <div className="text-3xl sm:text-4xl font-mono font-bold text-white tracking-[0.3em] panel-section py-2.5 sm:py-3 select-all rounded-xl">
             {game.code}
           </div>
@@ -1483,32 +1483,32 @@ function LobbyView({ game, onJoin, onStart, error }: {
         {/* Player Grid */}
         <div ref={gridRef} className="lobby-grid mb-6">
           {game.players.map((p, idx) => (
-            <div key={p.id} className={`lobby-card ${idx >= computedSeatCount ? 'ring-1 ring-purple-500/40' : ''}`}>
+            <div key={p.id} className={`lobby-card ${idx >= computedSeatCount ? 'ring-1 ring-burgundy/40' : ''}`}>
               <div className="avatar-circle lg mb-2">
                 {p.avatar || p.name.charAt(0).toUpperCase()}
               </div>
-              <div className="text-sm font-medium text-white truncate max-w-full px-1">{p.name}</div>
+              <div className="text-sm font-medium text-gold-light truncate max-w-full px-1">{p.name}</div>
               <div className="flex gap-1 mt-1 flex-wrap justify-center">
-                {p.id === game.createdBy && <span className="text-amber-400 text-[10px] bg-amber-900/30 px-1.5 py-0.5 rounded-full">Host</span>}
-                {p.id === game.myPlayerId && <span className="text-indigo-300 text-[10px] bg-indigo-900/30 px-1.5 py-0.5 rounded-full">You</span>}
-                {idx >= computedSeatCount && <span className="text-purple-300 text-[10px] bg-purple-900/30 px-1.5 py-0.5 rounded-full">Will pair</span>}
+                {p.id === game.createdBy && <span className="text-gold text-[10px] bg-gold-dark/20 px-1.5 py-0.5 rounded-full">Host</span>}
+                {p.id === game.myPlayerId && <span className="text-burgundy-light text-[10px] bg-burgundy/20 px-1.5 py-0.5 rounded-full">You</span>}
+                {idx >= computedSeatCount && <span className="text-burgundy-light text-[10px] bg-burgundy/20 px-1.5 py-0.5 rounded-full">Will pair</span>}
               </div>
             </div>
           ))}
           {Array.from({ length: emptySlotsCount }).map((_, i) => (
             <div key={`empty-${i}`} className="lobby-card empty">
               <div className="avatar-circle lg mb-2 opacity-20">?</div>
-              <div className="text-sm text-slate-700 animate-pulse">Waiting...</div>
+              <div className="text-sm text-gold-light/25 animate-pulse">Waiting...</div>
             </div>
           ))}
         </div>
 
-        <div className="text-center text-slate-600 text-sm mb-2">
+        <div className="text-center text-gold-light/40 text-sm mb-2">
           {playerCount} player{playerCount !== 1 ? 's' : ''} joined
           {hasEnoughPlayers ? ` · ${computedSeatCount} seats` : ''}
         </div>
         {extraPlayers > 0 && (
-          <div className="text-center text-purple-400 text-xs mb-4">
+          <div className="text-center text-burgundy-light text-xs mb-4">
             {extraPlayers} extra player{extraPlayers > 1 ? 's' : ''} will be paired with random seated players to share cards
           </div>
         )}
@@ -1531,7 +1531,7 @@ function LobbyView({ game, onJoin, onStart, error }: {
         )}
 
         {isInGame && !isHost && (
-          <div className="text-center text-slate-600 text-sm animate-pulse">
+          <div className="text-center text-gold-light/40 text-sm animate-pulse">
             Waiting for the host to start...
           </div>
         )}
