@@ -26,7 +26,7 @@ function FloatingSuits() {
       const el = document.createElement('span');
       el.className = 'floating-suit';
       el.textContent = SUIT_SYMBOLS[i % 4];
-      el.style.color = i % 4 === 1 || i % 4 === 2 ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.05)';
+      el.style.color = i % 4 === 1 || i % 4 === 2 ? 'rgba(212,175,55,0.08)' : 'rgba(245,240,225,0.04)';
       el.style.fontSize = `${1.2 + Math.random() * 1.8}rem`;
       container.appendChild(el);
       suits.push(el);
@@ -166,7 +166,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-slate-400 animate-pulse">Loading...</div>
+        <div className="text-xl text-gold-light/50 animate-pulse">Loading...</div>
       </div>
     );
   }
@@ -179,8 +179,8 @@ export default function HomePage() {
 
       {/* Top navbar with profile */}
       {savedName && !editingProfile && (
-        <nav className="fixed top-0 left-0 right-0 z-20 bg-black/30 backdrop-blur-sm border-b border-white/5 px-4 py-2 flex items-center justify-between">
-          <span className="text-amber-400 font-bold text-sm tracking-tight">Literature</span>
+        <nav className="fixed top-0 left-0 right-0 z-20 bg-wood-dark/60 backdrop-blur-sm border-b border-wood/30 px-4 py-2 flex items-center justify-between">
+          <span className="text-gold font-bold text-sm tracking-tight font-heading">Literature</span>
           <button
             onClick={() => setEditingProfile(true)}
             className="profile-btn"
@@ -189,7 +189,7 @@ export default function HomePage() {
             <span className="avatar-circle sm">
               {savedAvatar || savedName.charAt(0).toUpperCase()}
             </span>
-            <span className="text-sm text-slate-300 mr-1">{savedName}</span>
+            <span className="text-sm text-gold-light mr-1">{savedName}</span>
           </button>
         </nav>
       )}
@@ -198,12 +198,12 @@ export default function HomePage() {
         <h1 ref={titleRef} className="text-3xl sm:text-5xl font-bold text-center mb-1 title-shimmer tracking-tight" style={{ opacity: 0 }}>
           Literature
         </h1>
-        <p className="text-center text-slate-500 mb-5 sm:mb-8 text-xs sm:text-sm tracking-wide">
+        <p className="text-center text-gold-light/40 mb-5 sm:mb-8 text-xs sm:text-sm tracking-wide">
           The classic card game
         </p>
 
         {error && (
-          <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2.5 rounded-xl mb-4 text-sm">
+          <div className="bg-red-900/30 border border-red-500/30 text-red-300 px-4 py-2.5 rounded-xl mb-4 text-sm font-medium">
             {error}
           </div>
         )}
@@ -214,7 +214,7 @@ export default function HomePage() {
             <div className="space-y-5">
               {/* Avatar Picker */}
               <div>
-                <label className="block text-sm text-slate-400 mb-2 font-medium">Pick your avatar</label>
+                <label className="block text-sm text-gold-light/60 mb-2 font-medium">Pick your avatar</label>
                 <div className="avatar-grid">
                   {AVATARS.map(a => (
                     <button
@@ -231,7 +231,7 @@ export default function HomePage() {
 
               {/* Name Input */}
               <div>
-                <label className="block text-sm text-slate-400 mb-2 font-medium">Your name</label>
+                <label className="block text-sm text-gold-light/60 mb-2 font-medium">Your name</label>
                 <input
                   type="text"
                   value={name}
@@ -275,12 +275,12 @@ export default function HomePage() {
                   {savedAvatar || savedName?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-widest">Playing as</div>
-                  <div className="text-base sm:text-lg font-semibold text-white truncate">{savedName}</div>
+                  <div className="text-[10px] sm:text-xs text-gold-light/40 uppercase tracking-widest">Playing as</div>
+                  <div className="text-base sm:text-lg font-semibold text-gold-light truncate">{savedName}</div>
                 </div>
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="text-xs text-slate-500 hover:text-amber-400 transition-colors px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-white/5"
+                  className="text-xs text-gold-light/50 hover:text-gold transition-colors px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-felt-light/15"
                 >
                   Edit
                 </button>
@@ -290,21 +290,21 @@ export default function HomePage() {
               <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                 {/* Game Log Toggle */}
                 <div className="flex items-center justify-between">
-                  <label className="text-sm text-slate-400 font-medium">Game Log</label>
+                  <label className="text-sm text-gold-light/60 font-medium">Game Log</label>
                   <button
                     onClick={() => setShowLog(!showLog)}
-                    className={`relative w-12 h-6 rounded-full transition-all ${showLog ? 'bg-amber-600 shadow-md shadow-amber-600/20' : 'bg-slate-700/50 border border-white/10'}`}
+                    className={`relative w-12 h-6 rounded-full transition-all ${showLog ? 'bg-gold shadow-md shadow-gold/20' : 'bg-felt-dark/60 border border-wood/20'}`}
                   >
                     <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${showLog ? 'translate-x-6' : ''}`} />
                   </button>
                 </div>
                 {!showLog && (
-                  <div className="text-xs text-slate-600 text-center -mt-2">
+                  <div className="text-xs text-gold-light/40 text-center -mt-2">
                     Game log will be hidden for all players
                   </div>
                 )}
 
-                <div className="text-xs text-slate-500 text-center">
+                <div className="text-xs text-gold-light/40 text-center">
                   Seats (6, 8, or 12) are auto-determined based on how many players join
                 </div>
               </div>
@@ -318,7 +318,7 @@ export default function HomePage() {
               <div className="relative my-6">
                 <div className="divider" />
                 <div className="relative flex justify-center -mt-2.5">
-                  <span className="px-3 text-xs text-slate-600 uppercase tracking-wider" style={{ background: 'var(--bg-primary)' }}>
+                  <span className="px-3 text-xs text-gold-light/40 uppercase tracking-wider" style={{ background: 'var(--bg-primary)' }}>
                     or join a game
                   </span>
                 </div>
@@ -341,9 +341,9 @@ export default function HomePage() {
               </div>
 
               {/* How to Play */}
-              <div className="mt-8 pt-6 border-t border-white/5">
-                <h3 className="text-amber-400/80 font-semibold mb-2 text-sm">How to Play</h3>
-                <ul className="text-slate-500 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
+              <div className="mt-8 pt-6 border-t border-wood/20">
+                <h3 className="text-gold/80 font-semibold mb-2 text-sm font-heading">How to Play</h3>
+                <ul className="text-gold-light/50 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
                   <li>6+ players — seats (6, 8, or 12) auto-fit to player count, extras pair up</li>
                   <li>48 cards (no 7s), 8 half-suits of 6 cards each</li>
                   <li>Ask any other player for specific cards you need</li>
